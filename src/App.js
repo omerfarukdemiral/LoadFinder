@@ -17,6 +17,9 @@ import { ManageLoads } from './pages/Loads/ManageLoads';
 import { LoadOffers } from './pages/Loads/LoadOffers';
 import { PersonalInfo } from './pages/Profile/PersonalInfo';
 import { ChangePassword } from './pages/Profile/ChangePassword';
+import { RoleSelection } from './pages/Register/RoleSelection';
+import { DriverInfo } from './pages/Profile/DriverInfo';
+import { ShipperInfo } from './pages/Profile/ShipperInfo';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -26,6 +29,7 @@ const AppRoutes = () => {
       <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Welcome />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/register/role-selection" element={<RoleSelection />} />
       
       {/* Dashboard Routes - Nested route yapısını düzenledik */}
       <Route path="/dashboard" element={<DashboardLayout />}>
@@ -33,6 +37,8 @@ const AppRoutes = () => {
         <Route path="profile">
           <Route path="personal" element={<PersonalInfo />} />
           <Route path="password" element={<ChangePassword />} />
+          <Route path="driver-info" element={<DriverInfo />} />
+          <Route path="shipper-info" element={<ShipperInfo />} />
         </Route>
         <Route path="loads">
           <Route path="create" element={<CreateLoad />} />

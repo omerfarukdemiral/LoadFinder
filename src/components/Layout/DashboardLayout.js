@@ -4,13 +4,14 @@ import {
   FaHome, FaUser, FaTruck, FaMoneyBill, FaMap, 
   FaBell, FaStar, FaHeadset, FaCog, FaSignOutAlt,
   FaBars, FaChevronDown, FaChevronRight, FaPlus,
-  FaList, FaInbox, FaKey, FaUserCircle
+  FaList, FaInbox, FaKey, FaUserCircle, FaBuilding
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../common/Logo';
 import profileImage from '../../assets/images/ofd.jpeg';
+import { Profile } from '../../pages/Profile';
 
-const quickMenuItems = [
+const getQuickMenuItems = (user) => [
   { path: '/dashboard', icon: <FaHome />, title: 'Dashboard' },
   { path: '/dashboard/loads', 
     icon: <FaTruck />, 
@@ -31,6 +32,8 @@ const quickMenuItems = [
     subItems: [
       { path: '/dashboard/profile/personal', icon: <FaUserCircle />, title: 'Kişisel Bilgiler' },
       { path: '/dashboard/profile/password', icon: <FaKey />, title: 'Şifre Değiştirme' },
+      ...(user?.role === 'driver' || user?.role === 'admin' ? [{ path: '/dashboard/profile/driver-info', icon: <FaTruck />, title: 'Şoför Bilgileri' }] : []),
+      ...(user?.role === 'shipper' || user?.role === 'admin' ? [{ path: '/dashboard/profile/shipper-info', icon: <FaBuilding />, title: 'Firma Bilgileri' }] : []),
     ]
   },
 ];
@@ -46,6 +49,8 @@ export const DashboardLayout = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const menuItems = getQuickMenuItems(user);
 
   const toggleSubmenu = (index) => {
     setActiveSubmenu(activeSubmenu === index ? null : index);
@@ -91,6 +96,32 @@ export const DashboardLayout = () => {
     );
   };
 
+  const getRoleBadge = () => {
+    if (user?.role === 'driver') {
+      return (
+        <div className="flex items-center bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+          <FaTruck className="mr-1" />
+          Şoför
+        </div>
+      );
+    }
+    else if (user?.role === 'shipper') {
+    return (
+      <div className="flex items-center bg-green-600 text-white text-xs px-2 py-1 rounded-full">
+        <FaBuilding className="mr-1" />
+        Yük Veren
+      </div>
+    );
+  }else {
+    return (
+      <div className="flex items-center bg-red-600 text-white text-xs px-2 py-1 rounded-full">
+        <FaUser className="mr-1" />
+        Admin
+      </div>
+    );
+  }
+};
+
   return (
     <div className="flex h-screen bg-[#1a1a1a] font-nunito">
       {/* Sidebar */}
@@ -109,11 +140,11 @@ export const DashboardLayout = () => {
           <div className="py-4">
             {isSidebarOpen && (
               <h2 className="px-6 text-xs font-semibold text-[#999999] uppercase tracking-wider mb-2">
-                Quick Menu
+                Hızlı Menü
               </h2>
             )}
             <nav>
-              {quickMenuItems.map((item, index) => (
+              {menuItems.map((item, index) => (
                 <div key={item.path || index}>
                   {renderMenuItem(item, index)}
                   {isSidebarOpen && item.subItems && activeSubmenu === index && (
@@ -139,7 +170,7 @@ export const DashboardLayout = () => {
           <nav className="py-2">
             {supportMenuItems.map((item, index) => (
               <div key={item.path}>
-                {renderMenuItem(item, index + quickMenuItems.length)}
+                {renderMenuItem(item, index + menuItems.length)}
               </div>
             ))}
           </nav>
@@ -171,6 +202,7 @@ export const DashboardLayout = () => {
                 onClick={() => navigate('/dashboard/profile/personal')}
                 className="flex items-center space-x-3 cursor-pointer hover:bg-[#2a2a2a] p-2 rounded-lg transition-colors"
               >
+                {getRoleBadge()}
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#333333] bg-[#2a2a2a]">
                   <img 
                     src={user?.avatar || profileImage} 

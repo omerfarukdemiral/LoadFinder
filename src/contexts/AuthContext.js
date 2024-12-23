@@ -8,14 +8,15 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState({
     username: 'Ömer Faruk DEMİRAL',
     email: 'omerfarukdemiral@gmail.com',
-    avatar: defaultAvatar // Varsayılan avatar
+    avatar: defaultAvatar, // Varsayılan avatar
+    role: 'admin' // Varsayılan rol olarak Admin
   });
   const navigate = useNavigate();
 
   const login = (username, password) => {
     // Default kullanıcı bilgileri
     if (username === "admin" && password === "admin123") {
-      setUser({ username, role: 'user' });
+      setUser({ username, role: 'admin' }); // Admin rolü
       return true;
     }
     return false;
@@ -33,4 +34,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext); 
+export const useAuth = () => useContext(AuthContext);

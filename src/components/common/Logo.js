@@ -7,7 +7,7 @@ export const Logo = ({ className = '', showText = true }) => {
       <FaTruck className="text-3xl text-blue-200 mr-2" />
       {showText && (
         <span className="font-blinker text-xl font-bold text-white">
-          EDATApp - FindLoad
+          EDATApp - LoadFinder
         </span>
       )}
     </Link>

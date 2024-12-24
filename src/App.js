@@ -21,9 +21,26 @@ import { RoleSelection } from './pages/Register/RoleSelection';
 import { DriverInfo } from './pages/Profile/DriverInfo';
 import { ShipperInfo } from './pages/Profile/ShipperInfo';
 import { LoadListings } from './pages/Loads/LoadListings';
+import { Users } from './pages/Admin/Users';
+import { Settings } from './pages/Admin/Settings';
+import { DriverOffers } from './pages/Driver/Offers';
 
 const AppRoutes = () => {
   const { user } = useAuth();
+
+  const AdminRoute = ({ children }) => {
+    if (user?.role !== 'admin') {
+      return <Navigate to="/dashboard" />;
+    }
+    return children;
+  };
+
+  const DriverRoute = ({ children }) => {
+    if (user?.role !== 'driver' && user?.role !== 'admin') {
+      return <Navigate to="/dashboard" />;
+    }
+    return children;
+  };
 
   return (
     <Routes>
@@ -32,7 +49,6 @@ const AppRoutes = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/register/role-selection" element={<RoleSelection />} />
       
-      {/* Dashboard Routes - Nested route yapısını düzenledik */}
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="profile">
@@ -45,6 +61,25 @@ const AppRoutes = () => {
           <Route path="create" element={<CreateLoad />} />
           <Route path="manage" element={<ManageLoads />} />
           <Route path="offers" element={<LoadOffers />} />
+        </Route>
+        <Route path="driver">
+          <Route path="offers" element={
+            <DriverRoute>
+              <DriverOffers />
+            </DriverRoute>
+          } />
+        </Route>
+        <Route path="admin">
+          <Route path="users" element={
+            <AdminRoute>
+              <Users />
+            </AdminRoute>
+          } />
+          <Route path="settings" element={
+            <AdminRoute>
+              <Settings />
+            </AdminRoute>
+          } />
         </Route>
         <Route path="payments" element={<Payments />} />
         <Route path="map" element={<Map />} />

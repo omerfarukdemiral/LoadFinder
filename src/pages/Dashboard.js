@@ -4,6 +4,20 @@ import { useAuth } from '../contexts/AuthContext';
 export const Dashboard = () => {
   const { user } = useAuth();
 
+  // Role göre özelleştirilmiş karşılama mesajı
+  const getWelcomeMessage = () => {
+    switch (user?.role) {
+      case 'admin':
+        return 'Sistem Yöneticisi';
+      case 'driver':
+        return 'Şoför';
+      case 'shipper':
+        return 'Yük Veren';
+      default:
+        return '';
+    }
+  };
+
   const stats = [
     {
       title: "Maliyetler",
@@ -37,9 +51,15 @@ export const Dashboard = () => {
 
   return (
     <div className="space-y-6 font-nunito">
-      <h1 className="text-2xl font-bold text-white font-blinker">
-        Hoş Geldiniz, {user?.username}
-      </h1>
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold text-white font-blinker">
+          Hoş Geldiniz, {user?.username}
+        </h1>
+        <p className="text-gray-400">
+          {getWelcomeMessage()} paneline erişim sağladınız.
+          {user?.role !== 'admin' && " Yetkiniz dahilinde işlemler yapabilirsiniz."}
+        </p>
+      </div>
       
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

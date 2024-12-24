@@ -1,63 +1,46 @@
 import { useState } from 'react';
-import { FaBox, FaTruck, FaSnowflake, FaExclamationTriangle, FaChevronDown, FaChevronUp } from 'react-icons/fa';
-
-// Mock data
-const mockData = Array(25).fill(null).map((_, index) => {
-  const loadTypes = ['Konteyner', 'Kuru Yük', 'Soğuk Yük', 'Tehlikeli Madde'];
-  const sizes = ['2m x 2m x 2m', '3m x 2m x 2m', '4m x 2m x 2m', '5m x 2m x 2m'];
-  const weights = [800, 1000, 1500, 2000, 2500, 3000];
-  const distances = [300, 500, 700, 1000, 1200, 1500];
-  const budgets = [2000, 2500, 3000, 3500, 4000, 4500, 5000];
-  const cities = ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Adana'];
-
-  return {
-    id: index + 1,
-    loadType: loadTypes[Math.floor(Math.random() * loadTypes.length)],
-    size: sizes[Math.floor(Math.random() * sizes.length)],
-    weight: weights[Math.floor(Math.random() * weights.length)],
-    distance: distances[Math.floor(Math.random() * distances.length)],
-    budget: budgets[Math.floor(Math.random() * budgets.length)],
-    from: cities[Math.floor(Math.random() * cities.length)],
-    to: cities[Math.floor(Math.random() * cities.length)],
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    requirements: ['Sigorta zorunlu', 'Deneyimli şoför', 'GPS takip sistemi'],
-    deadline: '2024-03-20',
-    status: 'Aktif'
-  };
-});
+import { useNavigate } from 'react-router-dom';
+import { FaBox, FaTruck, FaSnowflake, FaExclamationTriangle, FaChevronDown, FaChevronUp, FaTimes, FaMoneyBillWave, FaCheckCircle } from 'react-icons/fa';
+import { MOCK_LOAD_LISTINGS_DETAILED } from '../../constants/mockData';
 
 const getIcon = (loadType) => {
   switch (loadType) {
     case 'Konteyner':
-      return <FaBox className="text-3xl text-blue-500" />;
+      return <FaBox className="text-2xl text-blue-500" />;
     case 'Kuru Yük':
-      return <FaTruck className="text-3xl text-green-500" />;
+      return <FaTruck className="text-2xl text-green-500" />;
     case 'Soğuk Yük':
-      return <FaSnowflake className="text-3xl text-cyan-500" />;
+      return <FaSnowflake className="text-2xl text-cyan-500" />;
     case 'Tehlikeli Madde':
-      return <FaExclamationTriangle className="text-3xl text-red-500" />;
+      return <FaExclamationTriangle className="text-2xl text-red-500" />;
     default:
-      return null;
+      return <FaBox className="text-2xl text-gray-500" />;
   }
 };
 
 export const LoadListings = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     loadType: '',
-    weight: { min: 0, max: 3000 },
+    weight: { min: 0, max: 5000 },
     distance: { min: 0, max: 1500 },
     budget: { min: 0, max: 5000 }
   });
 
   const [expandedCard, setExpandedCard] = useState(null);
-  const [filteredData, setFilteredData] = useState(mockData);
+  const [filteredData, setFilteredData] = useState(MOCK_LOAD_LISTINGS_DETAILED);
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [selectedLoad, setSelectedLoad] = useState(null);
+  const [offerAmount, setOfferAmount] = useState('');
+  const [offerNote, setOfferNote] = useState('');
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const handleFilterChange = (filterType, value) => {
     const newFilters = { ...filters, [filterType]: value };
     setFilters(newFilters);
 
     // Filtreleme işlemi
-    const filtered = mockData.filter(load => {
+    const filtered = MOCK_LOAD_LISTINGS_DETAILED.filter(load => {
       const typeMatch = !newFilters.loadType || load.loadType === newFilters.loadType;
       const weightMatch = load.weight >= newFilters.weight.min && load.weight <= newFilters.weight.max;
       const distanceMatch = load.distance >= newFilters.distance.min && load.distance <= newFilters.distance.max;
@@ -67,6 +50,44 @@ export const LoadListings = () => {
     });
 
     setFilteredData(filtered);
+  };
+
+  const handleOpenOfferModal = (load) => {
+    setSelectedLoad(load);
+    setOfferAmount(load.budget.toString());
+    setShowOfferModal(true);
+  };
+
+  const handleSubmitOffer = (e) => {
+    e.preventDefault();
+    
+    // Yeni teklif objesi oluştur
+    const newOffer = {
+      id: Date.now(), // Unique ID
+      loadType: selectedLoad.loadType,
+      from: selectedLoad.from,
+      to: selectedLoad.to,
+      price: parseFloat(offerAmount),
+      status: 'pending',
+      deadline: selectedLoad.deadline,
+      distance: selectedLoad.distance,
+      note: offerNote
+    };
+
+    // Mock data'ya teklifi ekle
+    if (typeof window !== 'undefined') {
+      const currentOffers = JSON.parse(localStorage.getItem('driverOffers') || '[]');
+      localStorage.setItem('driverOffers', JSON.stringify([...currentOffers, newOffer]));
+    }
+
+    // Modalı kapat ve başarı mesajını göster
+    setShowOfferModal(false);
+    setShowSuccessMessage(true);
+
+    // 1 saniye sonra tekliflerim sayfasına yönlendir
+    setTimeout(() => {
+      navigate('/dashboard/driver/offers');
+    }, 1000);
   };
 
   return (
@@ -99,7 +120,7 @@ export const LoadListings = () => {
               <input
                 type="range"
                 min="0"
-                max="3000"
+                max="5000"
                 step="100"
                 value={filters.weight.max}
                 onChange={(e) => handleFilterChange('weight', { min: filters.weight.min, max: parseInt(e.target.value) })}
@@ -206,7 +227,10 @@ export const LoadListings = () => {
                 </div>
                 <div className="mt-4 flex justify-between items-center">
                   <p className="text-gray-400">Son Teslim: {load.deadline}</p>
-                  <button className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition duration-200">
+                  <button 
+                    onClick={() => handleOpenOfferModal(load)}
+                    className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition duration-200"
+                  >
                     Teklif Ver
                   </button>
                 </div>
@@ -215,6 +239,102 @@ export const LoadListings = () => {
           </div>
         ))}
       </div>
+
+      {/* Teklif Verme Modalı */}
+      {showOfferModal && selectedLoad && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#242424] rounded-lg w-full max-w-md border border-[#333333] overflow-hidden">
+            {/* Modal Başlık */}
+            <div className="flex justify-between items-center p-4 border-b border-[#333333]">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                {getIcon(selectedLoad.loadType)}
+                Teklif Ver
+              </h3>
+              <button 
+                onClick={() => setShowOfferModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <FaTimes className="text-xl" />
+              </button>
+            </div>
+
+            {/* Modal İçerik */}
+            <form onSubmit={handleSubmitOffer} className="p-4 space-y-4">
+              {/* Yük Bilgileri */}
+              <div className="bg-[#2a2a2a] p-3 rounded-lg space-y-2">
+                <div className="flex justify-between text-gray-400">
+                  <span>Güzergah:</span>
+                  <span className="text-white">{selectedLoad.from} → {selectedLoad.to}</span>
+                </div>
+                <div className="flex justify-between text-gray-400">
+                  <span>Mesafe:</span>
+                  <span className="text-white">{selectedLoad.distance} km</span>
+                </div>
+                <div className="flex justify-between text-gray-400">
+                  <span>Yük Tipi:</span>
+                  <span className="text-white">{selectedLoad.loadType}</span>
+                </div>
+                <div className="flex justify-between text-gray-400">
+                  <span>İlan Bütçesi:</span>
+                  <span className="text-green-500">₺{selectedLoad.budget}</span>
+                </div>
+              </div>
+
+              {/* Teklif Tutarı */}
+              <div className="space-y-2">
+                <label className="block text-gray-400">Teklif Tutarı (₺)</label>
+                <div className="relative">
+                  <FaMoneyBillWave className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="number"
+                    value={offerAmount}
+                    onChange={(e) => setOfferAmount(e.target.value)}
+                    className="w-full bg-[#2a2a2a] border border-[#333333] text-white rounded-md py-2 pl-10 pr-3"
+                    placeholder="Teklifiniz..."
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Not Alanı */}
+              <div className="space-y-2">
+                <label className="block text-gray-400">Not (Opsiyonel)</label>
+                <textarea
+                  value={offerNote}
+                  onChange={(e) => setOfferNote(e.target.value)}
+                  className="w-full bg-[#2a2a2a] border border-[#333333] text-white rounded-md p-3 h-24 resize-none"
+                  placeholder="Teklifiniz hakkında ek bilgi ekleyin..."
+                />
+              </div>
+
+              {/* Butonlar */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowOfferModal(false)}
+                  className="flex-1 bg-[#2a2a2a] text-white px-4 py-2 rounded-md hover:bg-[#333333] transition duration-200"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200"
+                >
+                  Teklif Gönder
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Başarı Mesajı */}
+      {showSuccessMessage && (
+        <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
+          <FaCheckCircle />
+          Teklifiniz başarıyla gönderildi!
+        </div>
+      )}
     </div>
   );
 }; 

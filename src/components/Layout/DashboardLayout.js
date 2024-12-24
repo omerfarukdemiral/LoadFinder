@@ -4,40 +4,75 @@ import {
   FaHome, FaUser, FaTruck, FaMoneyBill, FaMap, 
   FaBell, FaStar, FaHeadset, FaCog, FaSignOutAlt,
   FaBars, FaChevronDown, FaChevronRight, FaPlus,
-  FaList, FaInbox, FaKey, FaUserCircle, FaBuilding, FaClipboardList
+  FaList, FaInbox, FaKey, FaUserCircle, FaBuilding, 
+  FaClipboardList, FaHandshake, FaUsers, FaUserCog
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../common/Logo';
 import profileImage from '../../assets/images/ofd.jpeg';
 import { Profile } from '../../pages/Profile';
 
-const getQuickMenuItems = (user) => [
-  { path: '/dashboard', icon: <FaHome />, title: 'Dashboard' },
-  { path: '/dashboard/load-listings', icon: <FaClipboardList />, title: 'Yük İlanları' },
-  { path: '/dashboard/loads', 
-    icon: <FaTruck />, 
-    title: 'Yük Yönetimi',
-    subItems: [
-      { path: '/dashboard/loads/create', icon: <FaPlus />, title: 'İlan Oluştur' },
-      { path: '/dashboard/loads/manage', icon: <FaList />, title: 'İlanlarım' },
-      { path: '/dashboard/loads/offers', icon: <FaInbox />, title: 'Gelen Teklifler' },
-    ]
-  },
-  { path: '/dashboard/payments', icon: <FaMoneyBill />, title: 'Ödeme Sistemi' },
-  { path: '/dashboard/map', icon: <FaMap />, title: 'Harita' },
-  { path: '/dashboard/notifications', icon: <FaBell />, title: 'Bildirimler' },
-  { 
-    path: '/dashboard/profile', 
-    icon: <FaUser />, 
-    title: 'Profil',
-    subItems: [
-      { path: '/dashboard/profile/personal', icon: <FaUserCircle />, title: 'Kişisel Bilgiler' },
-      { path: '/dashboard/profile/password', icon: <FaKey />, title: 'Şifre Değiştirme' },
-      ...(user?.role === 'driver' || user?.role === 'admin' ? [{ path: '/dashboard/profile/driver-info', icon: <FaTruck />, title: 'Şoför Bilgileri' }] : []),
-      ...(user?.role === 'shipper' || user?.role === 'admin' ? [{ path: '/dashboard/profile/shipper-info', icon: <FaBuilding />, title: 'Firma Bilgileri' }] : []),
-    ]
-  },
-];
+const getQuickMenuItems = (user) => {
+  const baseMenuItems = [
+    { path: '/dashboard', icon: <FaHome />, title: 'Dashboard' },
+    { path: '/dashboard/load-listings', icon: <FaClipboardList />, title: 'Yük İlanları' },
+  ];
+
+  // Shipper ve Admin için Yük Yönetimi menüsü
+  if (user?.role === 'shipper' || user?.role === 'admin') {
+    baseMenuItems.push({
+      path: '/dashboard/loads',
+      icon: <FaTruck />,
+      title: 'Yük Yönetimi',
+      subItems: [
+        { path: '/dashboard/loads/create', icon: <FaPlus />, title: 'İlan Oluştur' },
+        { path: '/dashboard/loads/manage', icon: <FaList />, title: 'İlanlarım' },
+        { path: '/dashboard/loads/offers', icon: <FaInbox />, title: 'Gelen Teklifler' },
+      ]
+    });
+  }
+
+  // Driver için Teklifler menüsü
+  if (user?.role === 'driver' || user?.role === 'admin') {
+    baseMenuItems.push({
+      path: '/dashboard/driver/offers',
+      icon: <FaHandshake />,
+      title: 'Tekliflerim'
+    });
+  }
+
+  // Ortak menü öğeleri
+  baseMenuItems.push(
+    { path: '/dashboard/payments', icon: <FaMoneyBill />, title: 'Ödeme Sistemi' },
+    { path: '/dashboard/map', icon: <FaMap />, title: 'Harita' },
+    { path: '/dashboard/notifications', icon: <FaBell />, title: 'Bildirimler' },
+    {
+      path: '/dashboard/profile',
+      icon: <FaUser />,
+      title: 'Profil',
+      subItems: [
+        { path: '/dashboard/profile/personal', icon: <FaUserCircle />, title: 'Kişisel Bilgiler' },
+        { path: '/dashboard/profile/password', icon: <FaKey />, title: 'Şifre Değiştirme' },
+        ...(user?.role === 'driver' || user?.role === 'admin' ? [
+          { path: '/dashboard/profile/driver-info', icon: <FaTruck />, title: 'Şoför Bilgileri' }
+        ] : []),
+        ...(user?.role === 'shipper' || user?.role === 'admin' ? [
+          { path: '/dashboard/profile/shipper-info', icon: <FaBuilding />, title: 'Firma Bilgileri' }
+        ] : [])
+      ]
+    }
+  );
+
+  // Admin için ek menüler
+  if (user?.role === 'admin') {
+    baseMenuItems.push(
+      { path: '/dashboard/admin/users', icon: <FaUsers />, title: 'Kullanıcılar' },
+      { path: '/dashboard/admin/settings', icon: <FaCog />, title: 'Sistem Ayarları' }
+    );
+  }
+
+  return baseMenuItems;
+};
 
 const supportMenuItems = [
   { path: '/dashboard/feedback', icon: <FaStar />, title: 'Geri Bildirim' },
@@ -48,7 +83,7 @@ export const DashboardLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSubmenu, setActiveSubmenu] = useState(null);
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUserRole } = useAuth();
   const navigate = useNavigate();
 
   const menuItems = getQuickMenuItems(user);
@@ -123,6 +158,11 @@ export const DashboardLayout = () => {
   }
 };
 
+  const handleRoleChange = (e) => {
+    const newRole = e.target.value;
+    updateUserRole(newRole);
+  };
+
   return (
     <div className="flex h-screen bg-[#1a1a1a] font-nunito">
       {/* Sidebar */}
@@ -190,6 +230,20 @@ export const DashboardLayout = () => {
           </button>
 
           <div className="flex items-center space-x-4">
+            {/* Geliştirici Modu - Rol Değiştirme */}
+            <div className="flex items-center gap-2 bg-yellow-500/10 px-3 py-1.5 rounded-md border border-yellow-500/20">
+              <FaUserCog className="text-yellow-500" />
+              <select
+                value={user?.role}
+                onChange={handleRoleChange}
+                className="bg-[#2a2a2a] border border-[#333333] text-[#e0e0e0] rounded-md p-1 text-sm"
+              >
+                <option value="driver">Şoför</option>
+                <option value="shipper">Yük Veren</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
             <button className="p-2 hover:bg-[#2a2a2a] rounded-full transition-colors">
               <FaBell className="text-xl" />
             </button>

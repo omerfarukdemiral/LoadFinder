@@ -1,15 +1,11 @@
 import { useState } from 'react';
 import { FaSave, FaTruck } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
+import { MOCK_DRIVER_INFO } from '../../constants/mockData';
 
 export const DriverInfo = () => {
   const { user } = useAuth();
-  const [formData, setFormData] = useState({
-    driverLicenseNo: '34ABC123456',
-    vehicleType: 'tir',
-    vehiclePlate: '34 TIR 123',
-    experience: '8'
-  });
+  const [formData, setFormData] = useState(MOCK_DRIVER_INFO);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

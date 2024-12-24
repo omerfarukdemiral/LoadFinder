@@ -1,3 +1,12 @@
+import React from 'react';
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+
+const OfferStatusTitle = {
+  'Pending': 'İşlem Bekliyor',
+  'Accepted': 'Kabul Edildi',
+  'Rejected': 'Reddedildi',
+};
+
 export const LoadOffers = () => {
   const mockOffers = [
     {
@@ -5,69 +14,76 @@ export const LoadOffers = () => {
       loadId: '#12345',
       offerer: 'Ahmet Yılmaz',
       price: 5000,
-      status: 'Beklemede',
+      status: 'Pending',
     },
     {
       offerId: '#O12346',
       loadId: '#12346',
       offerer: 'Mehmet Demir',
       price: 4500,
-      status: 'Kabul Edildi',
+      status: 'Accepted',
     },
     {
       offerId: '#O12347',
       loadId: '#12347',
       offerer: 'Ayşe Kaya',
       price: 6000,
-      status: 'Reddedildi',
+      status: 'Rejected',
     },
     {
       offerId: '#O12348',
       loadId: '#12348',
       offerer: 'Fatma Çelik',
       price: 5500,
-      status: 'Beklemede',
+      status: 'Pending',
     },
   ];
+
+  const groupedOffers = {
+    'Pending': mockOffers.filter(offer => offer.status === 'Pending'),
+    'Accepted': mockOffers.filter(offer => offer.status === 'Accepted'),
+    'Rejected': mockOffers.filter(offer => offer.status === 'Rejected'),
+  };
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-[#e0e0e0] font-blinker">Gelen Teklifler</h1>
-      <div className="bg-[#242424] rounded-lg p-6 border border-[#333333]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-[#e0e0e0]">
-            <thead>
-              <tr className="text-left border-b border-[#333333]">
-                <th className="pb-3">Teklif No</th>
-                <th className="pb-3">İlan No</th>
-                <th className="pb-3">Teklif Veren</th>
-                <th className="pb-3">Fiyat</th>
-                <th className="pb-3">Durum</th>
-                <th className="pb-3">İşlemler</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockOffers.map((offer) => (
-                <tr key={offer.offerId} className="border-b border-[#333333]">
-                  <td className="py-3">{offer.offerId}</td>
-                  <td>{offer.loadId}</td>
-                  <td>{offer.offerer}</td>
-                  <td>₺{offer.price.toLocaleString()}</td>
-                  <td>
-                    <span className={`bg-${offer.status === 'Beklemede' ? 'yellow' : offer.status === 'Kabul Edildi' ? 'green' : 'red'}-600 text-white px-2 py-1 rounded-full text-xs`}>
-                      {offer.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button className="text-green-400 hover:text-green-300 mr-2">Kabul Et</button>
-                    <button className="text-red-400 hover:text-red-300">Reddet</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+      {Object.keys(groupedOffers).map(status => (
+        <div key={status}>
+          <h2 className="text-xl font-bold text-white">{OfferStatusTitle[status]}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {groupedOffers[status].map(offer => (
+              <div key={offer.offerId} className="bg-[#242424] rounded-lg p-4 border border-[#333333] shadow-md">
+                <div className="flex justify-between mb-2">
+                  <h3 className="text-lg font-semibold text-white">{offer.offerer}</h3>
+                  <span className={`bg-${offer.status === 'Pending' ? 'yellow' : offer.status === 'Accepted' ? 'green' : 'red'}-600 text-white px-2 py-1 rounded-full text-xs`}>
+                    {OfferStatusTitle[offer.status]}
+                  </span>
+                </div>
+                <hr className="my-2 border-gray-600" />
+                <div className="text-center text-gray-400">
+                  <p>Teklif No: {offer.offerId}</p>
+                  <p>İlan No: {offer.loadId}</p>
+                  <p className="text-xl font-bold text-white">₺{offer.price.toLocaleString()}</p>
+                </div>
+                <hr className="my-2 border-gray-600" />
+                {offer.status === 'Pending' && (
+                  <div className="flex justify-between mt-4 w-11/12 mx-auto">
+                    <button className="bg-green-600 text-white rounded-l-full p-2 hover:bg-green-400 transition duration-200 flex items-center justify-center w-full">
+                      <FaCheckCircle className="text-white" />
+                    </button>
+                    <div className="border-l border-gray-600 h-8 mx-2" />
+                    <button className="bg-red-600 text-white rounded-r-full p-2 hover:bg-red-400 transition duration-200 flex items-center justify-center w-full">
+                      <FaTimesCircle className="text-white" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }; 

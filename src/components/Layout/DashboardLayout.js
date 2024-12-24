@@ -4,7 +4,7 @@ import {
   FaHome, FaUser, FaTruck, FaMoneyBill, FaMap, 
   FaBell, FaStar, FaHeadset, FaCog, FaSignOutAlt,
   FaBars, FaChevronDown, FaChevronRight, FaPlus,
-  FaList, FaInbox, FaKey, FaUserCircle, FaBuilding
+  FaList, FaInbox, FaKey, FaUserCircle, FaBuilding, FaClipboardList
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../common/Logo';
@@ -13,6 +13,7 @@ import { Profile } from '../../pages/Profile';
 
 const getQuickMenuItems = (user) => [
   { path: '/dashboard', icon: <FaHome />, title: 'Dashboard' },
+  { path: '/dashboard/load-listings', icon: <FaClipboardList />, title: 'Yük İlanları' },
   { path: '/dashboard/loads', 
     icon: <FaTruck />, 
     title: 'Yük Yönetimi',

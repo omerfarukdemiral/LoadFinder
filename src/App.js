@@ -20,6 +20,7 @@ import { ChangePassword } from './pages/Profile/ChangePassword';
 import { RoleSelection } from './pages/Register/RoleSelection';
 import { DriverInfo } from './pages/Profile/DriverInfo';
 import { ShipperInfo } from './pages/Profile/ShipperInfo';
+import { LoadListings } from './pages/Loads/LoadListings';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -50,6 +51,7 @@ const AppRoutes = () => {
         <Route path="notifications" element={<Notifications />} />
         <Route path="feedback" element={<Feedback />} />
         <Route path="support" element={<Support />} />
+        <Route path="load-listings" element={<LoadListings />} />
       </Route>
     </Routes>
   );

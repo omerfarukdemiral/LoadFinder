@@ -1,4 +1,5 @@
 import React from 'react';
+import { FaBox, FaTruck, FaSnowflake, FaExclamationTriangle, FaTrash } from 'react-icons/fa';
 
 const mockData = [
   {
@@ -39,48 +40,52 @@ const mockData = [
   },
 ];
 
+const getIcon = (loadType) => {
+  switch (loadType) {
+    case 'Konteyner':
+      return <FaBox className="text-3xl text-blue-500" />;
+    case 'Kuru Yük':
+      return <FaTruck className="text-3xl text-green-500" />;
+    case 'Soğuk Yük':
+      return <FaSnowflake className="text-3xl text-cyan-500" />;
+    case 'Tehlikeli Madde':
+      return <FaExclamationTriangle className="text-3xl text-red-500" />;
+    default:
+      return null;
+  }
+};
+
 export const ManageLoads = () => {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-[#e0e0e0] font-blinker">İlanlarım</h1>
-      <div className="bg-[#242424] rounded-lg p-6 border border-[#333333]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-[#e0e0e0]">
-            <thead>
-              <tr className="text-left border-b border-[#333333]">
-                <th className="pb-3">İlan No</th>
-                <th className="pb-3">Yük Türü</th>
-                <th className="pb-3">Boyut</th>
-                <th className="pb-3">Ağırlık (kg)</th>
-                <th className="pb-3">Taşıma Mesafesi (km)</th>
-                <th className="pb-3">Bütçe (₺)</th>
-                <th className="pb-3">Durum</th>
-                <th className="pb-3">İşlemler</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockData.map((load) => (
-                <tr key={load.id} className="border-b border-[#333333]">
-                  <td className="py-3">{load.id}</td>
-                  <td>{load.loadType}</td>
-                  <td>{load.size}</td>
-                  <td>{load.weight}</td>
-                  <td>{load.distance}</td>
-                  <td>{load.budget}</td>
-                  <td>
-                    <span className={`bg-${load.status === 'Aktif' ? 'green' : 'yellow'}-600 text-white px-2 py-1 rounded-full text-xs`}>
-                      {load.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button className="text-blue-400 hover:text-blue-300 mr-2">Düzenle</button>
-                    <button className="text-red-400 hover:text-red-300">Sil</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {mockData.map((load) => (
+          <div key={load.id} className="bg-[#242424] rounded-lg p-4 border border-[#333333] shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">{load.loadType}</h2>
+              {getIcon(load.loadType)}
+            </div>
+            <div className="text-gray-400 text-center">
+              <p>Boyut: {load.size}</p>
+              <p>Ağırlık: {load.weight} kg</p>
+              <p>Mesafe: {load.distance} km</p>
+              <p>Bütçe: ₺{load.budget}</p>
+              <span className={`mt-2 inline-block bg-${load.status === 'Aktif' ? 'green' : 'yellow'}-600 text-white px-2 py-1 rounded-full text-xs`}>
+                {load.status}
+              </span>
+            </div>
+            <hr className="my-4 border-gray-600" />
+            <div className="flex justify-between">
+              <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
+                Düzenle
+              </button>
+              <button className="text-red-400 flex items-center">
+                <FaTrash className="mr-1" />
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

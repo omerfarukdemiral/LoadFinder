@@ -11,6 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../common/Logo';
 import profileImage from '../../assets/images/ofd.jpeg';
 import { Profile } from '../../pages/Profile';
+import { MOCK_USERS_DETAILED } from '../../constants/mockData';
 
 const getQuickMenuItems = (user) => {
   const baseMenuItems = [
@@ -83,7 +84,7 @@ export const DashboardLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSubmenu, setActiveSubmenu] = useState(null);
   const location = useLocation();
-  const { user, logout, updateUserRole } = useAuth();
+  const { user, logout, updateUser, updateUserRole } = useAuth();
   const navigate = useNavigate();
 
   const menuItems = getQuickMenuItems(user);
@@ -230,17 +231,27 @@ export const DashboardLayout = () => {
           </button>
 
           <div className="flex items-center space-x-4">
-            {/* Geliştirici Modu - Rol Değiştirme */}
+            {/* Geliştirici Modu - Kullanıcı Değiştirme */}
             <div className="flex items-center gap-2 bg-yellow-500/10 px-3 py-1.5 rounded-md border border-yellow-500/20">
               <FaUserCog className="text-yellow-500" />
               <select
-                value={user?.role}
-                onChange={handleRoleChange}
-                className="bg-[#2a2a2a] border border-[#333333] text-[#e0e0e0] rounded-md p-1 text-sm"
+                value={user?.id}
+                onChange={(e) => {
+                  const selectedUser = MOCK_USERS_DETAILED.find(
+                    u => u.id === Number(e.target.value)
+                  );
+                  if (selectedUser) {
+                    updateUser(selectedUser);
+                  }
+                }}
+                className="bg-[#2a2a2a] border border-[#333333] text-[#e0e0e0] rounded-md p-1 text-sm min-w-[200px]"
               >
-                <option value="driver">Şoför</option>
-                <option value="shipper">Yük Veren</option>
-                <option value="admin">Admin</option>
+                {MOCK_USERS_DETAILED.map(mockUser => (
+                  <option key={mockUser.id} value={mockUser.id}>
+                    {mockUser.name} ({mockUser.role === 'admin' ? 'Admin' : 
+                      mockUser.role === 'driver' ? 'Şoför' : 'Yük Veren'})
+                  </option>
+                ))}
               </select>
             </div>
 

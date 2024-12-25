@@ -1,16 +1,13 @@
 import { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import defaultAvatar from '../assets/images/ofd.jpeg';
+import { MOCK_USERS_DETAILED } from '../constants/mockData';
+
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState({
-    username: 'Ömer Faruk DEMİRAL',
-    email: 'omerfarukdemiral@gmail.com',
-    avatar: defaultAvatar,
-    role: 'admin'
-  });
+  const [user, setUser] = useState(MOCK_USERS_DETAILED[0]);
   const navigate = useNavigate();
 
   const login = (username, password) => {
@@ -24,6 +21,10 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     navigate('/login');
+  };
+
+  const updateUser = (selectedUser) => {
+    setUser(selectedUser);
   };
 
   const updateUserRole = (newRole) => {
@@ -47,6 +48,7 @@ export const AuthProvider = ({ children }) => {
       user, 
       login, 
       logout,
+      updateUser,
       updateUserRole,
       checkAccess
     }}>

@@ -6,6 +6,9 @@ import {
   FaChevronUp, FaComments, FaEye, FaBoxOpen, FaQuestionCircle
 } from 'react-icons/fa';
 import OfferDetailModal from '../../components/OfferDetailModal';
+import UpdateLoadModal from '../../components/UpdateLoadModal';
+import { useAuth } from '../../contexts/AuthContext';
+import { MOCK_LOADS } from '../../constants/mockData';
 
 const LOAD_TYPE_ICONS = {
   'Konteyner': FaBoxOpen,
@@ -24,20 +27,22 @@ export const ManageLoads = () => {
   const [expandedLoad, setExpandedLoad] = useState(null);
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [showOfferModal, setShowOfferModal] = useState(false);
+  const [selectedLoad, setSelectedLoad] = useState(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const storedLoads = JSON.parse(localStorage.getItem('loads') || '[]');
-    const storedOffers = JSON.parse(localStorage.getItem('offers') || '[]');
     
-    // Her yük için teklif sayısını hesapla
-    const loadsWithOffers = storedLoads.map(load => ({
-      ...load,
-      offers: storedOffers.filter(offer => offer.loadId === load.id),
-      offerCount: storedOffers.filter(offer => offer.loadId === load.id).length
-    }));
+    if (storedLoads.length === 0) {
+      localStorage.setItem('loads', JSON.stringify(MOCK_LOADS));
+    }
+
+    const userLoads = (storedLoads.length > 0 ? storedLoads : MOCK_LOADS)
+      .filter(load => load.createdBy === user.id);
     
-    setLoads(loadsWithOffers);
-  }, []);
+    setLoads(userLoads);
+  }, [user.id]);
 
   const handleExpandLoad = (loadId) => {
     setExpandedLoad(expandedLoad === loadId ? null : loadId);
@@ -51,6 +56,22 @@ export const ManageLoads = () => {
   const getIcon = (loadType) => {
     const Icon = LOAD_TYPE_ICONS[loadType] || FaBox;
     return <Icon className="text-2xl" />;
+  };
+
+  const handleEditClick = (load) => {
+    setSelectedLoad(load);
+    setShowUpdateModal(true);
+  };
+
+  const handleUpdateLoad = (updatedLoad) => {
+    const updatedLoads = loads.map(load => 
+      load.id === updatedLoad.id ? updatedLoad : load
+    );
+    
+    localStorage.setItem('loads', JSON.stringify(updatedLoads));
+    setLoads(updatedLoads);
+    setShowUpdateModal(false);
+    setSelectedLoad(null);
   };
 
   return (
@@ -164,7 +185,10 @@ export const ManageLoads = () => {
 
             {/* Footer */}
             <div className="bg-[#2a2a2a] p-4 border-t border-[#333333] flex justify-between items-center">
-              <button className="flex items-center gap-2 text-blue-500 hover:text-blue-400 transition-colors">
+              <button 
+                onClick={() => handleEditClick(load)}
+                className="flex items-center gap-2 text-blue-500 hover:text-blue-400 transition-colors"
+              >
                 <FaEdit />
                 <span>Düzenle</span>
               </button>
@@ -185,6 +209,19 @@ export const ManageLoads = () => {
             setShowOfferModal(false);
             setSelectedOffer(null);
           }}
+          viewOnly={true}
+        />
+      )}
+
+      {/* Update Modal */}
+      {showUpdateModal && selectedLoad && (
+        <UpdateLoadModal
+          load={selectedLoad}
+          onClose={() => {
+            setShowUpdateModal(false);
+            setSelectedLoad(null);
+          }}
+          onUpdate={handleUpdateLoad}
         />
       )}
     </div>

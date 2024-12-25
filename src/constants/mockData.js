@@ -315,17 +315,73 @@ export const MOCK_INCOMING_OFFERS = [
 
 export const MOCK_LOADS = [
   {
-    id: 1,
+    id: 'L00001',
     loadType: 'Konteyner',
-    size: '2m x 2m x 2m',
-    weight: 1000,
-    distance: 500,
-    budget: 2000,
-    from: 'İstanbul',
-    to: 'Ankara',
-    createdBy: 'user1',
-    createdAt: new Date(),
-    status: 'Pending'
+    size: '2.5m x 2.5m x 6m',
+    weight: 5000,
+    distance: 450,
+    budget: 3500,
+    from: 'İstanbul, Türkiye',
+    to: 'Ankara, Türkiye',
+    createdBy: 4, // Anadolu Lojistik'in ID'si
+    createdAt: '2024-03-15T10:30:00',
+    status: 'Active',
+    offerCount: 2,
+    offers: [
+      {
+        id: 1,
+        loadId: 'L00001',
+        offerer: 'Ahmet Yılmaz',
+        offererId: 2,
+        price: 3200,
+        note: 'Hemen yola çıkabilirim.'
+      }
+    ]
+  },
+  {
+    id: 'L00002',
+    loadType: 'Soğuk Yük',
+    size: '2m x 2m x 4m',
+    weight: 3000,
+    distance: 350,
+    budget: 4200,
+    from: 'İzmir, Türkiye',
+    to: 'Antalya, Türkiye',
+    createdBy: 4, // Anadolu Lojistik'in ID'si
+    createdAt: '2024-03-16T14:20:00',
+    status: 'Pending',
+    offerCount: 1,
+    offers: []
+  },
+  {
+    id: 'L00003',
+    loadType: 'Kuru Yük',
+    size: '2m x 2m x 3m',
+    weight: 2500,
+    distance: 280,
+    budget: 2800,
+    from: 'Bursa, Türkiye',
+    to: 'İstanbul, Türkiye',
+    createdBy: 5, // Marmara Lojistik'in ID'si
+    createdAt: '2024-03-14T09:15:00',
+    status: 'Active',
+    offerCount: 3,
+    offers: []
+  },
+  {
+    id: 'L00004',
+    loadType: 'Ağır Yük',
+    size: '3m x 3m x 5m',
+    weight: 8000,
+    distance: 520,
+    budget: 6500,
+    from: 'Ankara, Türkiye',
+    to: 'İzmir, Türkiye',
+    createdBy: 5, // Marmara Lojistik'in ID'si
+    createdAt: '2024-03-17T11:45:00',
+    status: 'Pending',
+    offerCount: 0,
+    offers: []
   }
 ];
 
@@ -338,5 +394,100 @@ export const MOCK_OFFERS = [
     note: 'Hemen taşıyabilirim',
     status: 'Pending',
     createdAt: new Date()
+  }
+];
+
+// Kullanıcılar için detaylı mock data
+export const MOCK_USERS_DETAILED = [
+  {
+    id: 1,
+    username: 'admin',
+    name: 'Sistem Yöneticisi',
+    email: 'admin@loadhub.com',
+    phone: '0532 555 0001',
+    role: 'admin',
+    status: 'active',
+    avatar: defaultAvatar,
+    registrationDate: '2023-01-01',
+  },
+  {
+    id: 2,
+    username: 'ahmetyilmaz',
+    name: 'Ahmet Yılmaz',
+    email: 'ahmet.yilmaz@gmail.com',
+    phone: '0532 555 0002',
+    role: 'driver',
+    status: 'active',
+    avatar: defaultAvatar,
+    registrationDate: '2023-06-15',
+    driverInfo: {
+      driverLicenseNo: '34ABC123456',
+      vehicleType: 'tir',
+      vehiclePlate: '34 TIR 123',
+      experience: '8'
+    }
+  },
+  {
+    id: 3,
+    username: 'mehmetdemir',
+    name: 'Mehmet Demir',
+    email: 'mehmet.demir@gmail.com',
+    phone: '0532 555 0003',
+    role: 'driver',
+    status: 'active',
+    avatar: defaultAvatar,
+    registrationDate: '2023-08-20',
+    driverInfo: {
+      driverLicenseNo: '34XYZ789012',
+      vehicleType: 'kamyon',
+      vehiclePlate: '34 KMY 456',
+      experience: '5'
+    }
+  },
+  {
+    id: 4,
+    username: 'anadolulojistik',
+    name: 'Anadolu Lojistik',
+    email: 'info@anadolulojistik.com',
+    phone: '0212 555 0001',
+    role: 'shipper',
+    status: 'active',
+    avatar: defaultAvatar,
+    registrationDate: '2023-03-10',
+    shipperInfo: {
+      companyName: 'Anadolu Lojistik A.Ş.',
+      taxNumber: '1234567890',
+      sector: 'Uluslararası Taşımacılık',
+      companyAddress: 'Atatürk Mah. İstanbul Cad. No:123 Kağıthane / İstanbul',
+      rating: '4.8',
+      totalLoads: 156,
+      completedLoads: 142,
+      cancelledLoads: 14,
+      memberSince: '2023-03-10',
+      verificationStatus: 'verified'
+    }
+  },
+  {
+    id: 5,
+    username: 'marmaralojistik',
+    name: 'Marmara Lojistik',
+    email: 'info@marmaralojistik.com',
+    phone: '0212 555 0002',
+    role: 'shipper',
+    status: 'active',
+    avatar: defaultAvatar,
+    registrationDate: '2023-04-25',
+    shipperInfo: {
+      companyName: 'Marmara Lojistik Ltd. Şti.',
+      taxNumber: '9876543210',
+      sector: 'Yurt İçi Taşımacılık',
+      companyAddress: 'Barbaros Mah. Ankara Cad. No:456 Beşiktaş / İstanbul',
+      rating: '4.6',
+      totalLoads: 98,
+      completedLoads: 89,
+      cancelledLoads: 9,
+      memberSince: '2023-04-25',
+      verificationStatus: 'verified'
+    }
   }
 ]; 

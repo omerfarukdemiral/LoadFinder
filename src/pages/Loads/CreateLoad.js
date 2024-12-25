@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FaBox, FaWeight, FaRoad, FaMoneyBillWave, FaClipboardList, FaArrowLeft, FaArrowRight, FaCheckCircle, FaEye, FaBoxOpen, FaSnowflake, FaTruck, FaWarehouse, FaIndustry, FaCarSide, FaShip, FaQuestionCircle } from 'react-icons/fa';
+import { FaBox, FaWeight, FaRoad, FaMoneyBillWave, FaClipboardList, FaArrowLeft, FaArrowRight, FaCheckCircle, FaEye, FaBoxOpen, FaSnowflake, FaTruck, FaWarehouse, FaIndustry, FaCarSide, FaShip, FaQuestionCircle, FaCalculator, FaCube, FaMapMarkerAlt } from 'react-icons/fa';
 import { LOAD_TYPES } from '../../constants/mockData';
+import AutocompleteInput from '../../components/AutocompleteInput';
 
 const LOAD_TYPE_ICONS = {
   'Konteyner': FaBoxOpen,
@@ -38,6 +39,67 @@ export const CreateLoad = () => {
 
   // Form hataları için state
   const [errors, setErrors] = useState({});
+
+  const [fromLocation, setFromLocation] = useState('');
+  const [toLocation, setToLocation] = useState('');
+  const [selectedFrom, setSelectedFrom] = useState(null);
+  const [selectedTo, setSelectedTo] = useState(null);
+
+  useEffect(() => {
+    // Google Maps API'sini yükle
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDotmN9h8wYbJp7eWkXda6yZkRyuV9t_nM&libraries=places`;
+    script.async = true;
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
+  // selectedFrom veya selectedTo değiştiğinde mesafeyi otomatik hesapla
+  useEffect(() => {
+    if (selectedFrom && selectedTo) {
+      calculateDistance();
+    }
+  }, [selectedFrom, selectedTo]);
+
+  const calculateDistance = async () => {
+    if (!selectedFrom || !selectedTo) return;
+
+    const service = new window.google.maps.DistanceMatrixService();
+    
+    try {
+      const response = await new Promise((resolve, reject) => {
+        service.getDistanceMatrix({
+          origins: [selectedFrom.description],
+          destinations: [selectedTo.description],
+          travelMode: 'DRIVING',
+        }, (response, status) => {
+          if (status === 'OK') resolve(response);
+          else reject(status);
+        });
+      });
+
+      const distance = response.rows[0].elements[0].distance.value / 1000;
+      
+      // Sadece şehir ve ülke bilgisini al
+      const fromParts = selectedFrom.description.split(',');
+      const toParts = selectedTo.description.split(',');
+      const fromLocation = `${fromParts[0]}, ${fromParts[fromParts.length - 1].trim()}`;
+      const toLocation = `${toParts[0]}, ${toParts[toParts.length - 1].trim()}`;
+      
+      setFormData(prev => ({
+        ...prev,
+        from: fromLocation,
+        to: toLocation,
+        distance: Math.round(distance)
+      }));
+
+    } catch (error) {
+      console.error('Mesafe hesaplanırken hata oluştu:', error);
+    }
+  };
 
   // Form adımları
   const steps = [
@@ -179,9 +241,12 @@ export const CreateLoad = () => {
     // Yeni yük ilanı oluştur
     const newLoad = {
       ...formData,
-      id: Date.now(),
-      createdAt: new Date(),
-      status: 'Pending'
+      id: `L${String(Date.now()).slice(-5)}`, // Son 5 haneyi al
+      createdBy: user.id, // Aktif kullanıcının ID'si
+      createdAt: new Date().toISOString(),
+      status: 'Pending',
+      offerCount: 0,
+      offers: []
     };
 
     // Mock data'yı güncelle
@@ -190,9 +255,40 @@ export const CreateLoad = () => {
       localStorage.setItem('loads', JSON.stringify([...currentLoads, newLoad]));
     }
 
-    // Direkt ManageLoads sayfasına yönlendir
-    navigate('/dashboard/loads/manage');
+    // Başarı mesajını göster
+    setShowSuccess(true);
   };
+
+  const renderDistanceStep = () => (
+    <div className="space-y-6 w-full max-w-md mx-auto">
+      <div>
+        <label className="block text-gray-400 mb-2">Nereden</label>
+        <AutocompleteInput
+          value={fromLocation}
+          onChange={setFromLocation}
+          onSelect={setSelectedFrom}
+          placeholder="Şehir ara..."
+        />
+      </div>
+
+      <div>
+        <label className="block text-gray-400 mb-2">Nereye</label>
+        <AutocompleteInput
+          value={toLocation}
+          onChange={setToLocation}
+          onSelect={setSelectedTo}
+          placeholder="Şehir ara..."
+        />
+      </div>
+
+      {formData.distance > 0 && (
+        <div className="text-center p-4 bg-[#2a2a2a] rounded-lg border border-[#333333]">
+          <p className="text-gray-400">Toplam Mesafe:</p>
+          <p className="text-2xl font-bold text-white">{formData.distance} km</p>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="flex justify-center">
@@ -200,16 +296,19 @@ export const CreateLoad = () => {
         <h1 className="text-2xl font-bold text-[#e0e0e0] font-blinker text-center">Yük İlanı Oluştur</h1>
         
         {showSuccess && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-[#242424] p-6 rounded-lg text-center space-y-4">
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-[#242424] p-6 rounded-lg text-center space-y-4 relative">
               <FaCheckCircle className="text-green-500 text-5xl mx-auto" />
               <h2 className="text-xl text-white">İlan başarıyla oluşturuldu!</h2>
               <div className="flex justify-center gap-4">
                 <button
-                  onClick={() => navigate('/dashboard/loads/offers')}
+                  onClick={() => {
+                    setShowSuccess(false);
+                    navigate('/dashboard/loads/manage');
+                  }}
                   className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
                 >
-                  <FaEye /> İlanı Görüntüle
+                  <FaEye /> İlanlarımı Görüntüle
                 </button>
               </div>
             </div>
@@ -269,20 +368,7 @@ export const CreateLoad = () => {
               </div>
             )}
 
-            {currentStep === 3 && (
-              <div className="text-center">
-                <label className="block text-gray-400 mb-2">Taşıma Mesafesi (km)</label>
-                <input
-                  type="number"
-                  name="distance"
-                  value={formData.distance}
-                  onChange={handleChange}
-                  className={`w-full bg-[#2a2a2a] border border-[#333333] text-[#e0e0e0] rounded-md p-2`}
-                  placeholder="Örn: 500"
-                />
-                {errors.distance && <p className="text-red-500 text-sm">{errors.distance}</p>}
-              </div>
-            )}
+            {currentStep === 3 && renderDistanceStep()}
 
             {currentStep === 4 && (
               <div className="text-center">
@@ -299,14 +385,90 @@ export const CreateLoad = () => {
               </div>
             )}
 
-            {currentStep === 5 && ( // Sonuç adımı
-              <div className="text-center">
-                <h2 className="text-lg font-bold text-white">Sonuç</h2>
-                <p className="text-gray-300">Yük Türü: {formData.loadType}</p>
-                <p className="text-gray-300">Boyut: {formData.size}</p>
-                <p className="text-gray-300">Ağırlık: {formData.weight} kg</p>
-                <p className="text-gray-300">Taşıma Mesafesi: {formData.distance} km</p>
-                <p className="text-gray-300">Bütçe: {formData.budget} ₺</p>
+            {currentStep === 5 && (
+              <div className="w-full max-w-lg mx-auto bg-[#2a2a2a] rounded-lg border border-[#333333] p-6">
+                <h2 className="text-2xl font-bold text-white text-center mb-6">Yük İlanı Özeti</h2>
+                
+                <div className="space-y-6">
+                  {/* Yük Tipi */}
+                  <div className="flex items-center justify-between p-3 bg-[#242424] rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {React.createElement(LOAD_TYPE_ICONS[formData.loadType] || FaBox, {
+                        className: "text-2xl text-blue-500"
+                      })}
+                      <div>
+                        <p className="text-gray-400 text-sm">Yük Türü</p>
+                        <p className="text-white font-medium">{formData.loadType}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Boyut ve Ağırlık */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-[#242424] rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FaCube className="text-blue-500" />
+                        <div>
+                          <p className="text-gray-400 text-sm">Boyut</p>
+                          <p className="text-white font-medium">{formData.size}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-[#242424] rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FaWeight className="text-blue-500" />
+                        <div>
+                          <p className="text-gray-400 text-sm">Ağırlık</p>
+                          <p className="text-white font-medium">{formData.weight} kg</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Rota Bilgisi */}
+                  <div className="p-4 bg-[#242424] rounded-lg">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FaMapMarkerAlt className="text-blue-500" />
+                      <p className="text-gray-400">Rota Bilgisi</p>
+                    </div>
+                    <div className="relative pl-6">
+                      <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-blue-500"></div>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-gray-400 text-sm">Nereden</p>
+                          <p className="text-white font-medium">{formData.from}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 text-sm">Nereye</p>
+                          <p className="text-white font-medium">{formData.to}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-[#333333]">
+                      <div className="flex items-center gap-2">
+                        <FaRoad className="text-blue-500" />
+                        <div>
+                          <p className="text-gray-400 text-sm">Toplam Mesafe</p>
+                          <p className="text-white font-medium">{formData.distance} km</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bütçe */}
+                  <div className="p-4 bg-[#242424] rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FaMoneyBillWave className="text-green-500" />
+                        <div>
+                          <p className="text-gray-400 text-sm">Bütçe</p>
+                          <p className="text-white font-medium">{formData.budget} ₺</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-400">~{Math.round(formData.budget / formData.distance)} ₺/km</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>

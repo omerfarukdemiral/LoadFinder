@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaBox, FaTruck, FaSnowflake, FaExclamationTriangle, FaChevronDown, FaChevronUp, FaTimes, FaMoneyBillWave, FaCheckCircle } from 'react-icons/fa';
-import { MOCK_LOAD_LISTINGS_DETAILED } from '../../constants/mockData';
+import { FaBox, FaTruck, FaSnowflake, FaExclamationTriangle, FaChevronDown, FaChevronUp, FaTimes, FaMoneyBillWave, FaCheckCircle, FaWeight, FaMapMarkerAlt, FaArrowRight, FaHandshake, FaRoad, FaUser, FaClock } from 'react-icons/fa';
+import { MOCK_LOAD_LISTINGS_DETAILED, MOCK_USERS_DETAILED } from '../../constants/mockData';
+import { useAuth } from '../../contexts/AuthContext';
 
 const getIcon = (loadType) => {
   switch (loadType) {
@@ -18,8 +19,113 @@ const getIcon = (loadType) => {
   }
 };
 
+const LoadCard = ({ load, onOfferClick }) => {
+  const [owner, setOwner] = useState(null);
+
+  useEffect(() => {
+    const loadOwner = MOCK_USERS_DETAILED.find(user => user.id === load.createdBy);
+    setOwner(loadOwner);
+  }, [load.createdBy]);
+
+  return (
+    <div className="bg-[#242424] rounded-lg border border-[#333333] overflow-hidden">
+      {/* Üst Kısım - İlan Sahibi, Tarih, Fiyat ve Teklif Butonu */}
+      <div className="p-4 border-b border-[#333333] bg-[#2a2a2a] flex items-center justify-between">
+        <div className="flex items-center space-x-6">
+          {/* İlan Sahibi */}
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#333333]">
+              <img 
+                src={owner?.avatar} 
+                alt={owner?.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <h3 className="text-white text-sm font-medium">{owner?.name}</h3>
+              <p className="text-xs text-gray-400">{owner?.shipperInfo?.companyName}</p>
+            </div>
+          </div>
+
+          {/* İlan Tarihi */}
+          <div className="text-sm">
+            <span className="text-gray-400">İlan Tarihi: </span>
+            <span className="text-white">{new Date(load.createdAt).toLocaleDateString('tr-TR')}</span>
+          </div>
+
+          {/* Fiyat Badge */}
+          <div className="bg-green-900/50 px-3 py-1 rounded-full border border-green-700/50">
+            <span className="text-green-400 font-medium">{load.budget} ₺</span>
+          </div>
+
+          {/* Teklif Sayısı */}
+          {load.offerCount > 0 && (
+            <div className="flex items-center space-x-2 text-sm">
+              <FaHandshake className="text-blue-400" />
+              <span className="text-gray-400">{load.offerCount} Teklif</span>
+            </div>
+          )}
+        </div>
+
+        {/* Teklif Ver Butonu */}
+        <button
+          onClick={() => onOfferClick(load)}
+          className="bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition duration-200 text-sm"
+        >
+          Teklif Ver
+        </button>
+      </div>
+
+      {/* Alt Kısım - Yük Detayları */}
+      <div className="p-4 grid grid-cols-2 gap-4">
+        {/* Yük Tipi, Boyut ve Ağırlık */}
+        <div className="flex items-start space-x-3">
+          <div className="mt-1">
+            <FaBox className="text-blue-400 text-lg" />
+          </div>
+          <div>
+            <p className="text-gray-400 text-xs">Yük Tipi</p>
+            <p className="text-white text-sm font-medium">{load.loadType}</p>
+            <p className="text-gray-400 text-xs mt-1">Boyut: {load.size}</p>
+            <p className="text-gray-400 text-xs mt-1">Ağırlık: {load.weight} kg</p>
+          </div>
+        </div>
+
+        {/* Mesafe ve Rota Bilgileri */}
+        <div className="flex items-start space-x-3">
+          <div className="mt-1">
+            <FaRoad className="text-blue-400 text-lg" />
+          </div>
+          <div className="w-full">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-xs">Mesafe</p>
+                <p className="text-white text-sm font-medium">{load.distance} km</p>
+                <p className="text-gray-400 text-xs mt-1">~{Math.round(load.budget / load.distance)} ₺/km</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="text-right">
+                  <p className="text-gray-400 text-xs">Nereden</p>
+                  <p className="text-white text-sm">{load.from}</p>
+                </div>
+                <FaArrowRight className="text-gray-500 mx-2" />
+                <div className="text-right">
+                  <p className="text-gray-400 text-xs">Nereye</p>
+                  <p className="text-white text-sm">{load.to}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const LoadListings = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const [filters, setFilters] = useState({
     loadType: '',
     weight: { min: 0, max: 5000 },
@@ -27,67 +133,110 @@ export const LoadListings = () => {
     budget: { min: 0, max: 5000 }
   });
 
-  const [expandedCard, setExpandedCard] = useState(null);
-  const [filteredData, setFilteredData] = useState(MOCK_LOAD_LISTINGS_DETAILED);
+  const [filteredData, setFilteredData] = useState([]);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [selectedLoad, setSelectedLoad] = useState(null);
   const [offerAmount, setOfferAmount] = useState('');
   const [offerNote, setOfferNote] = useState('');
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Verileri yükle
+  const loadData = () => {
+    try {
+      const storedLoads = JSON.parse(localStorage.getItem('loads') || '[]');
+      const allLoads = [...MOCK_LOAD_LISTINGS_DETAILED, ...storedLoads];
+      
+      // Filtreleme işlemi
+      const filtered = allLoads.filter(load => {
+        const typeMatch = !filters.loadType || load.loadType === filters.loadType;
+        const weightMatch = load.weight >= filters.weight.min && load.weight <= filters.weight.max;
+        const distanceMatch = load.distance >= filters.distance.min && load.distance <= filters.distance.max;
+        const budgetMatch = load.budget >= filters.budget.min && load.budget <= filters.budget.max;
+
+        return typeMatch && weightMatch && distanceMatch && budgetMatch;
+      });
+
+      setFilteredData(filtered);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setFilteredData([]);
+    }
+  };
+
+  // useEffect içinde loadData'yı çağır
+  useEffect(() => {
+    loadData();
+  }, [filters]);
 
   const handleFilterChange = (filterType, value) => {
     const newFilters = { ...filters, [filterType]: value };
     setFilters(newFilters);
-
-    // Filtreleme işlemi
-    const filtered = MOCK_LOAD_LISTINGS_DETAILED.filter(load => {
-      const typeMatch = !newFilters.loadType || load.loadType === newFilters.loadType;
-      const weightMatch = load.weight >= newFilters.weight.min && load.weight <= newFilters.weight.max;
-      const distanceMatch = load.distance >= newFilters.distance.min && load.distance <= newFilters.distance.max;
-      const budgetMatch = load.budget >= newFilters.budget.min && load.budget <= newFilters.budget.max;
-
-      return typeMatch && weightMatch && distanceMatch && budgetMatch;
-    });
-
-    setFilteredData(filtered);
   };
 
   const handleOpenOfferModal = (load) => {
     setSelectedLoad(load);
-    setOfferAmount(load.budget.toString());
     setShowOfferModal(true);
+    // Modal açıldığında form alanlarını sıfırla
+    setOfferAmount('');
+    setOfferNote('');
   };
 
-  const handleSubmitOffer = (e) => {
-    e.preventDefault();
-    
-    // Yeni teklif objesi oluştur
-    const newOffer = {
-      id: Date.now(), // Unique ID
-      loadType: selectedLoad.loadType,
-      from: selectedLoad.from,
-      to: selectedLoad.to,
-      price: parseFloat(offerAmount),
-      status: 'pending',
-      deadline: selectedLoad.deadline,
-      distance: selectedLoad.distance,
-      note: offerNote
-    };
-
-    // Mock data'ya teklifi ekle
-    if (typeof window !== 'undefined') {
-      const currentOffers = JSON.parse(localStorage.getItem('driverOffers') || '[]');
-      localStorage.setItem('driverOffers', JSON.stringify([...currentOffers, newOffer]));
+  const handleSubmitOffer = () => {
+    if (!offerAmount) {
+      alert('Lütfen teklif tutarı giriniz');
+      return;
     }
 
-    // Modalı kapat ve başarı mesajını göster
-    setShowOfferModal(false);
-    setShowSuccessMessage(true);
+    try {
+      // Yeni teklif oluştur
+      const newOffer = {
+        id: Date.now(),
+        loadId: selectedLoad.id,
+        amount: parseFloat(offerAmount),
+        note: offerNote,
+        createdAt: new Date().toISOString(),
+        status: 'Pending',
+        offerer: user?.name || 'Anonim',
+        offererId: user?.id,
+        loadDetails: {
+          loadType: selectedLoad.loadType,
+          from: selectedLoad.from,
+          to: selectedLoad.to,
+          weight: selectedLoad.weight,
+          size: selectedLoad.size,
+          distance: selectedLoad.distance,
+          budget: selectedLoad.budget
+        }
+      };
 
-    // 1 saniye sonra tekliflerim sayfasına yönlendir
-    setTimeout(() => {
-      navigate('/dashboard/driver/offers');
-    }, 1000);
+      // Mevcut teklifleri güncelle
+      const storedOffers = JSON.parse(localStorage.getItem('offers') || '[]');
+      localStorage.setItem('offers', JSON.stringify([...storedOffers, newOffer]));
+
+      // Yük ilanının teklif sayısını güncelle
+      const storedLoads = JSON.parse(localStorage.getItem('loads') || '[]');
+      const updatedLoads = storedLoads.map(load => {
+        if (load.id === selectedLoad.id) {
+          return {
+            ...load,
+            offerCount: (load.offerCount || 0) + 1
+          };
+        }
+        return load;
+      });
+      localStorage.setItem('loads', JSON.stringify(updatedLoads));
+
+      // Modalı kapat ve state'i temizle
+      setShowOfferModal(false);
+      setSelectedLoad(null);
+      setOfferAmount('');
+      setOfferNote('');
+
+      // Listeyi yenile
+      loadData();
+    } catch (error) {
+      console.error('Teklif gönderilirken hata oluştu:', error);
+      alert('Teklif gönderilirken bir hata oluştu');
+    }
   };
 
   return (
@@ -167,172 +316,184 @@ export const LoadListings = () => {
       </div>
 
       {/* İlan Listesi */}
-      <div className="grid grid-cols-1 gap-4 mx-auto w-1/2">
-        {filteredData.map((load) => (
-          <div key={load.id} className="bg-[#242424] rounded-lg border border-[#333333] overflow-hidden">
-            {/* Kart Başlığı */}
-            <div className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  {getIcon(load.loadType)}
-                  <div>
-                    <h2 className="text-lg font-semibold text-white">{load.loadType}</h2>
-                    <p className="text-gray-400">{load.from} → {load.to}</p>
+      {filteredData.length > 0 ? (
+        <div className="bg-[#242424] rounded-lg border border-[#333333] overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-[#2a2a2a] border-b border-[#333333]">
+              <tr>
+                <th className="px-4 py-3 text-left">
+                  <div className="flex items-center space-x-2">
+                    <FaUser className="text-blue-400" />
+                    <span className="text-gray-400 font-medium text-sm">İlan Sahibi</span>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-semibold text-white">₺{load.budget}</p>
-                  <p className="text-gray-400">{load.distance} km</p>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center mt-4">
-                <div className="text-gray-400">
-                  <p>Ağırlık: {load.weight} kg</p>
-                  <p>Boyut: {load.size}</p>
-                </div>
-                <button
-                  onClick={() => setExpandedCard(expandedCard === load.id ? null : load.id)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200 flex items-center"
-                >
-                  {expandedCard === load.id ? (
-                    <>
-                      Gizle <FaChevronUp className="ml-2" />
-                    </>
-                  ) : (
-                    <>
-                      Detaylı İncele <FaChevronDown className="ml-2" />
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Genişletilmiş Detaylar */}
-            {expandedCard === load.id && (
-              <div className="p-4 border-t border-[#333333] bg-[#2a2a2a]">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="text-white font-semibold mb-2">İlan Detayları</h3>
-                    <p className="text-gray-400">{load.description}</p>
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <div className="flex items-center space-x-2">
+                    <FaBox className="text-blue-400" />
+                    <span className="text-gray-400 font-medium text-sm">Yük Tipi</span>
                   </div>
-                  <div>
-                    <h3 className="text-white font-semibold mb-2">Gereksinimler</h3>
-                    <ul className="list-disc list-inside text-gray-400">
-                      {load.requirements.map((req, index) => (
-                        <li key={index}>{req}</li>
-                      ))}
-                    </ul>
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <div className="flex items-center space-x-2">
+                    <FaWeight className="text-blue-400" />
+                    <span className="text-gray-400 font-medium text-sm">Boyut/Ağırlık</span>
                   </div>
-                </div>
-                <div className="mt-4 flex justify-between items-center">
-                  <p className="text-gray-400">Son Teslim: {load.deadline}</p>
-                  <button 
-                    onClick={() => handleOpenOfferModal(load)}
-                    className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition duration-200"
-                  >
-                    Teklif Ver
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <div className="flex items-center space-x-2">
+                    <FaMapMarkerAlt className="text-blue-400" />
+                    <span className="text-gray-400 font-medium text-sm">Rota</span>
+                  </div>
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <div className="flex items-center space-x-2">
+                    <FaRoad className="text-blue-400" />
+                    <span className="text-gray-400 font-medium text-sm">Mesafe</span>
+                  </div>
+                </th>
+                <th className="px-4 py-3 text-center">
+                  <div className="flex items-center space-x-2">
+                    <FaHandshake className="text-blue-400" />
+                    <span className="text-gray-400 font-medium text-sm">Teklifler</span>
+                  </div>
+                </th>
+                <th className="px-4 py-3 text-right">
+                  <span className="text-gray-400 font-medium text-sm">İşlemler</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#333333]">
+              {filteredData.map((load) => {
+                const owner = MOCK_USERS_DETAILED.find(user => user.id === load.createdBy);
+                
+                return (
+                  <tr key={load.id} className="hover:bg-[#2a2a2a] transition-colors">
+                    {/* İlan Sahibi */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full overflow-hidden border border-[#333333]">
+                          <img 
+                            src={owner?.avatar} 
+                            alt={owner?.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-white text-sm font-medium">{owner?.name}</p>
+                          <p className="text-xs text-gray-400">{owner?.shipperInfo?.companyName}</p>
+                        </div>
+                      </div>
+                    </td>
 
-      {/* Teklif Verme Modalı */}
+                    {/* Yük Tipi */}
+                    <td className="px-4 py-3">
+                      <p className="text-white text-sm">{load.loadType}</p>
+                    </td>
+
+                    {/* Boyut/Ağırlık */}
+                    <td className="px-4 py-3">
+                      <p className="text-white text-sm">{load.size}</p>
+                      <p className="text-xs text-gray-400">{load.weight} kg</p>
+                    </td>
+
+                    {/* Rota */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center space-x-2">
+                        <div>
+                          <p className="text-white text-sm">{load.from}</p>
+                          <p className="text-xs text-gray-400">{load.to}</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Mesafe */}
+                    <td className="px-4 py-3">
+                      <p className="text-white text-sm">{load.distance} km</p>
+                      <p className="text-xs text-gray-400">~{Math.round(load.budget / load.distance)} ₺/km</p>
+                    </td>
+
+                    {/* Teklif Sayısı */}
+                    <td className="px-4 py-3 text-center">
+                      <div className="inline-flex items-center space-x-1 bg-blue-900/30 px-2 py-1 rounded">
+                        <span className="text-white text-sm">{load.offerCount || 0}</span>
+                        <span className="text-xs text-gray-400">teklif</span>
+                      </div>
+                    </td>
+
+                    {/* İşlemler */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end space-x-3">
+                        {/* Fiyat Badge */}
+                        <div className="bg-green-900/50 px-3 py-1 rounded-full border border-green-700/50">
+                          <span className="text-green-400 text-sm font-medium">{load.budget} ₺</span>
+                        </div>
+
+                        {/* Teklif Ver Butonu */}
+                        <button
+                          onClick={() => handleOpenOfferModal(load)}
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
+                        >
+                          Teklif Ver
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="text-center py-8 bg-[#242424] rounded-lg border border-[#333333]">
+          <p className="text-gray-400">Henüz ilan bulunmuyor veya filtrelere uygun ilan yok.</p>
+        </div>
+      )}
+
+      {/* Teklif Modalı */}
       {showOfferModal && selectedLoad && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#242424] rounded-lg w-full max-w-md border border-[#333333] overflow-hidden">
-            {/* Modal Başlık */}
-            <div className="flex justify-between items-center p-4 border-b border-[#333333]">
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                {getIcon(selectedLoad.loadType)}
-                Teklif Ver
-              </h3>
-              <button 
-                onClick={() => setShowOfferModal(false)}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <FaTimes className="text-xl" />
-              </button>
-            </div>
-
-            {/* Modal İçerik */}
-            <form onSubmit={handleSubmitOffer} className="p-4 space-y-4">
-              {/* Yük Bilgileri */}
-              <div className="bg-[#2a2a2a] p-3 rounded-lg space-y-2">
-                <div className="flex justify-between text-gray-400">
-                  <span>Güzergah:</span>
-                  <span className="text-white">{selectedLoad.from} → {selectedLoad.to}</span>
-                </div>
-                <div className="flex justify-between text-gray-400">
-                  <span>Mesafe:</span>
-                  <span className="text-white">{selectedLoad.distance} km</span>
-                </div>
-                <div className="flex justify-between text-gray-400">
-                  <span>Yük Tipi:</span>
-                  <span className="text-white">{selectedLoad.loadType}</span>
-                </div>
-                <div className="flex justify-between text-gray-400">
-                  <span>İlan Bütçesi:</span>
-                  <span className="text-green-500">₺{selectedLoad.budget}</span>
-                </div>
-              </div>
-
-              {/* Teklif Tutarı */}
-              <div className="space-y-2">
-                <label className="block text-gray-400">Teklif Tutarı (₺)</label>
-                <div className="relative">
-                  <FaMoneyBillWave className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="number"
-                    value={offerAmount}
-                    onChange={(e) => setOfferAmount(e.target.value)}
-                    className="w-full bg-[#2a2a2a] border border-[#333333] text-white rounded-md py-2 pl-10 pr-3"
-                    placeholder="Teklifiniz..."
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Not Alanı */}
-              <div className="space-y-2">
-                <label className="block text-gray-400">Not (Opsiyonel)</label>
-                <textarea
-                  value={offerNote}
-                  onChange={(e) => setOfferNote(e.target.value)}
-                  className="w-full bg-[#2a2a2a] border border-[#333333] text-white rounded-md p-3 h-24 resize-none"
-                  placeholder="Teklifiniz hakkında ek bilgi ekleyin..."
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-[#242424] p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-xl text-white mb-4">Teklif Ver</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 mb-2">Teklif Tutarı (₺)</label>
+                <input
+                  type="number"
+                  value={offerAmount}
+                  onChange={(e) => setOfferAmount(e.target.value)}
+                  className="w-full bg-[#2a2a2a] border border-[#333333] text-white rounded-md p-2"
+                  placeholder="Örn: 1500"
                 />
               </div>
 
-              {/* Butonlar */}
-              <div className="flex gap-3 pt-2">
+              <div>
+                <label className="block text-gray-400 mb-2">Not (Opsiyonel)</label>
+                <textarea
+                  value={offerNote}
+                  onChange={(e) => setOfferNote(e.target.value)}
+                  className="w-full bg-[#2a2a2a] border border-[#333333] text-white rounded-md p-2"
+                  placeholder="Teklifiniz hakkında not ekleyin..."
+                  rows="3"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3">
                 <button
-                  type="button"
                   onClick={() => setShowOfferModal(false)}
-                  className="flex-1 bg-[#2a2a2a] text-white px-4 py-2 rounded-md hover:bg-[#333333] transition duration-200"
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
                 >
                   İptal
                 </button>
                 <button
-                  type="submit"
-                  className="flex-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200"
+                  onClick={handleSubmitOffer}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                   Teklif Gönder
                 </button>
               </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Başarı Mesajı */}
-      {showSuccessMessage && (
-        <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
-          <FaCheckCircle />
-          Teklifiniz başarıyla gönderildi!
         </div>
       )}
     </div>

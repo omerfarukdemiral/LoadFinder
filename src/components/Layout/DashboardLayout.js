@@ -10,7 +10,6 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../common/Logo';
 import profileImage from '../../assets/images/ofd.jpeg';
-import { Profile } from '../../pages/Profile';
 import { MOCK_USERS_DETAILED } from '../../constants/mockData';
 
 const getQuickMenuItems = (user) => {
@@ -84,7 +83,7 @@ export const DashboardLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSubmenu, setActiveSubmenu] = useState(null);
   const location = useLocation();
-  const { user, logout, updateUser, updateUserRole } = useAuth();
+  const { user, logout, updateUser} = useAuth();
   const navigate = useNavigate();
 
   const menuItems = getQuickMenuItems(user);
@@ -159,9 +158,19 @@ export const DashboardLayout = () => {
   }
 };
 
-  const handleRoleChange = (e) => {
-    const newRole = e.target.value;
-    updateUserRole(newRole);
+
+  const handleLogout = async () => {
+    try {
+      const success = await logout();
+      if (success) {
+        // Başarılı çıkış sonrası login sayfasına yönlendir
+        navigate('/', { replace: true });
+      } else {
+        console.error('Çıkış işlemi başarısız');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
@@ -283,7 +292,7 @@ export const DashboardLayout = () => {
               </div>
               
               <button 
-                onClick={logout}
+                onClick={handleLogout}
                 className="p-2 hover:bg-[#2a2a2a] rounded-full transition-colors"
                 title="Çıkış Yap"
               >

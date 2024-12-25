@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FaCreditCard, FaHistory, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 export const Payments = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [loading, setLoading] = useState(false);

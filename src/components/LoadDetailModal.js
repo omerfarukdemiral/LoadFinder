@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   FaTimes, FaBox, FaMapMarkerAlt, FaRoute, 
   FaWeight, FaCube, FaTruck, FaMoneyBillWave, 
-  FaClock, FaClipboardList, FaInfoCircle, 
+  FaClock, 
   FaBuilding, FaPhone, FaEnvelope, FaGlobe, 
   FaStar, FaExclamationTriangle 
 } from 'react-icons/fa';

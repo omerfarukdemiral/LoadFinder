@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaLock, FaSave } from 'react-icons/fa';
+import { FaSave } from 'react-icons/fa';
 
 export const ChangePassword = () => {
   const [passwordData, setPasswordData] = useState({

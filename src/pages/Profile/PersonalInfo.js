@@ -1,22 +1,25 @@
 import { useState } from 'react';
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaSave, FaCamera, FaUserCog } from 'react-icons/fa';
+import { FaUser, FaSave, FaCamera } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
-import { MOCK_PERSONAL_INFO } from '../../constants/mockData';
 
 export const PersonalInfo = () => {
-  const { user, updateUserRole } = useAuth();
-  const [profileData, setProfileData] = useState(MOCK_PERSONAL_INFO);
-
+  const { user, updateProfile } = useAuth();
+  const [profileData, setProfileData] = useState(user || {});
   const [successMessage, setSuccessMessage] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await updateProfile(profileData);
+      setSuccessMessage('Profil bilgileriniz başarıyla güncellendi!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Profile update error:', error);
+    }
+  };
 
   const handleChange = (e) => {
     setProfileData({ ...profileData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSuccessMessage('Profil bilgileriniz başarıyla güncellendi!');
-    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleAvatarChange = (e) => {
@@ -28,11 +31,6 @@ export const PersonalInfo = () => {
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  const handleRoleChange = (e) => {
-    const newRole = e.target.value;
-    updateUserRole(newRole);
   };
 
   return (
@@ -152,26 +150,6 @@ export const PersonalInfo = () => {
             </button>
           </div>
         </form>
-      </div>
-
-      {/* Geliştirici Modu - Rol Değiştirme */}
-      <div className="bg-yellow-500/10 rounded-lg p-4 border border-yellow-500/20">
-        <div className="flex items-center gap-2 mb-4">
-          <FaUserCog className="text-yellow-500" />
-          <h3 className="text-yellow-500 font-semibold">Geliştirici Modu</h3>
-        </div>
-        <div className="flex items-center gap-4">
-          <label className="text-gray-400">Kullanıcı Rolü:</label>
-          <select
-            value={user?.role}
-            onChange={handleRoleChange}
-            className="bg-[#2a2a2a] border border-[#333333] text-[#e0e0e0] rounded-md p-2"
-          >
-            <option value="driver">Şoför</option>
-            <option value="shipper">Yük Veren</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
       </div>
     </div>
   );

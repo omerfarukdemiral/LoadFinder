@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaBox, FaTruck, FaSnowflake, FaExclamationTriangle, FaChevronDown, FaChevronUp, FaTimes, FaMoneyBillWave, FaCheckCircle, FaWeight, FaMapMarkerAlt, FaArrowRight, FaHandshake, FaRoad, FaUser, FaClock } from 'react-icons/fa';
+import { FaBox, FaTruck, FaSnowflake, FaExclamationTriangle, FaWeight, FaMapMarkerAlt, FaArrowRight, FaHandshake, FaRoad, FaUser } from 'react-icons/fa';
 import { MOCK_LOAD_LISTINGS_DETAILED, MOCK_USERS_DETAILED } from '../../constants/mockData';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -123,7 +123,6 @@ const LoadCard = ({ load, onOfferClick }) => {
 };
 
 export const LoadListings = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
   
   const [filters, setFilters] = useState({

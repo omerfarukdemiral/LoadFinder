@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  FaHandshake, FaEye, FaMapMarkerAlt, FaMoneyBillWave, 
-  FaClock, FaSort, FaSortUp, FaSortDown, FaSearch, FaTimes 
+  FaEye, FaMapMarkerAlt, FaMoneyBillWave, FaSearch, FaTimes 
 } from 'react-icons/fa';
 import { MOCK_DRIVER_OFFERS } from '../../../constants/mockData';
 import OfferDetailModal from '../../../components/OfferDetailModal';
@@ -32,10 +31,6 @@ export const DriverOffers = () => {
     
     setOffers(sortedOffers);
   }, [sortOrder]);
-
-  const handleSort = () => {
-    setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
-  };
 
   const filterButtons = [
     { id: 'all', label: 'Tümü', count: offers.length },
@@ -94,22 +89,6 @@ export const DriverOffers = () => {
     });
   };
 
-  const handleCancelOffer = (offerId) => {
-    // LocalStorage'dan mevcut teklifleri al
-    const storedOffers = JSON.parse(localStorage.getItem('driverOffers') || '[]');
-    
-    // Seçilen teklifi filtrele
-    const updatedOffers = storedOffers.filter(offer => offer.id !== offerId);
-    
-    // LocalStorage'ı güncelle
-    localStorage.setItem('driverOffers', JSON.stringify(updatedOffers));
-    
-    // State'i güncelle (mock data'yı koru, sadece localStorage'daki verileri güncelle)
-    setOffers(prevOffers => {
-      const mockOffers = prevOffers.filter(offer => !storedOffers.find(stored => stored.id === offer.id));
-      return [...mockOffers, ...updatedOffers];
-    });
-  };
 
   const handleRejectClick = (offer) => {
     setOfferToReject(offer);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FaBox, FaWeight, FaRoad, FaMoneyBillWave, FaClipboardList, FaArrowLeft, FaArrowRight, FaCheckCircle, FaEye, FaBoxOpen, FaSnowflake, FaTruck, FaWarehouse, FaIndustry, FaCarSide, FaShip, FaQuestionCircle, FaCalculator, FaCube, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaBox, FaWeight, FaRoad, FaMoneyBillWave, FaClipboardList, FaArrowLeft, FaArrowRight, FaCheckCircle, FaEye, FaBoxOpen, FaSnowflake, FaTruck, FaWarehouse, FaIndustry, FaCarSide, FaShip, FaQuestionCircle, FaCube, FaMapMarkerAlt } from 'react-icons/fa';
 import { LOAD_TYPES } from '../../constants/mockData';
 import AutocompleteInput from '../../components/AutocompleteInput';
 

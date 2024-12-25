@@ -1,8 +1,7 @@
 import React from 'react';
 import { 
   FaTimes, FaBox, FaMapMarkerAlt, FaMoneyBillWave, 
-  FaTruck, FaWeight, FaCube, FaRoute, FaClock,
-  FaCheckCircle, FaTimesCircle, FaUser, FaFileAlt
+  FaTruck, FaWeight, FaCube, FaRoute, FaCheckCircle, FaTimesCircle, FaUser, FaFileAlt
 } from 'react-icons/fa';
 import { withClickOutside } from './withClickOutside';
 

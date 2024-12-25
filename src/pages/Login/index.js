@@ -2,31 +2,31 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Logo } from '../../components/common/Logo';
 import { FcGoogle } from 'react-icons/fc';
+import { useAuth } from '../../contexts/AuthContext';
+
 
 export const Login = () => {
   const navigate = useNavigate();
+  const { login, error } = useAuth();
   const [formData, setFormData] = useState({
-    username: 'admin',
-    password: 'admin123',
+    email: '',
+    password: '',
   });
-  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.username === 'admin' && formData.password === 'admin123') {
+    try {
+      console.log('Login isteği gönderiliyor:', formData);
+      await login(formData);
+      console.log('Login başarılı');
       navigate('/dashboard');
-    } else {
-      setError('Kullanıcı adı veya şifre hatalı!');
+    } catch (error) {
+      console.error('Login hatası:', error);
     }
   };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError('');
-  };
-
-  const handleGoogleLogin = () => {
-    console.log('Google ile giriş yapılıyor...');
   };
 
   return (
@@ -61,11 +61,11 @@ export const Login = () => {
             )}
             
             <div>
-              <label className="block text-gray-400 mb-2">Kullanıcı Adı</label>
+              <label className="block text-gray-400 mb-2">E-posta</label>
               <input
-                type="text"
-                name="username"
-                value={formData.username}
+                type="email"
+                name="email"
+                value={formData.email}
                 onChange={handleChange}
                 className="w-full bg-[#2a2a2a] border border-[#333333] text-[#e0e0e0] rounded-md p-2"
                 required
@@ -86,7 +86,7 @@ export const Login = () => {
 
             <button
               type="submit"
-              className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors"
+              className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition-colors"
             >
               Giriş Yap
             </button>
@@ -95,7 +95,6 @@ export const Login = () => {
           <div className="mt-6 space-y-4">
             <button
               type="button"
-              onClick={handleGoogleLogin}
               className="w-full bg-[#242424] text-white py-2 px-4 rounded-md hover:bg-[#2a2a2a] flex items-center justify-center space-x-2 transition-colors border border-[#333333]"
             >
               <FcGoogle className="text-xl" />

@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { 
   FaSave, FaBuilding, FaStar, FaBox, FaCheck, 
-  FaTimes, FaCalendar, FaUsers, FaClock, FaPhone, 
-  FaEnvelope, FaGlobe, FaMapMarkerAlt 
+  FaTimes, FaCalendar, FaUsers, FaClock
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { MOCK_SHIPPER_INFO } from '../../constants/mockData';
@@ -32,7 +31,6 @@ export const ShipperInfo = () => {
   };
 
   const inputClasses = `w-full bg-[#2a2a2a] border border-[#333333] text-[#e0e0e0] rounded-md p-2`;
-  const readOnlyClasses = `w-full bg-[#1a1a1a] border border-[#333333] text-gray-400 rounded-md p-2 cursor-not-allowed`;
 
   return (
     <div className="space-y-6">

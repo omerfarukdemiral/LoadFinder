@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { FaUsers, FaEdit, FaTrash, FaUserPlus } from 'react-icons/fa';
-import { MOCK_USERS } from '../../../constants/mockData';
 
 export const Users = () => {
-  const [users, setUsers] = useState(MOCK_USERS);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [users, setUsers] = useState([]);
 
   const handleDeleteUser = (userId) => {
     setUsers(users.filter(user => user.id !== userId));

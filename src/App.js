@@ -4,8 +4,6 @@ import { Welcome } from './pages/Welcome';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
-import { Profile } from './pages/Profile';
-import { Loads } from './pages/Loads';
 import { Payments } from './pages/Payments';
 import { Map } from './pages/Map';
 import { Notifications } from './pages/Notifications';
@@ -24,6 +22,8 @@ import { LoadListings } from './pages/Loads/LoadListings';
 import { Users } from './pages/Admin/Users';
 import { Settings } from './pages/Admin/Settings';
 import { DriverOffers } from './pages/Driver/Offers';
+import { useEffect } from 'react';
+import SystemCheck from './utils/systemCheck';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -93,6 +93,20 @@ const AppRoutes = () => {
 };
 
 function App() {
+  useEffect(() => {
+    const checkSystem = async () => {
+      console.log('Sistem kontrolü başlatılıyor...');
+      try {
+        const status = await SystemCheck.performHealthCheck();
+        console.log('%cSistem kontrolü tamamlandı:', 'color: green; font-weight: bold', status);
+      } catch (error) {
+        console.error('%cSistem kontrolü başarısız:', 'color: red; font-weight: bold', error);
+      }
+    };
+
+    checkSystem();
+  }, []);
+
   return (
     <Router>
       <AuthProvider>

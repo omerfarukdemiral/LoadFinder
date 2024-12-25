@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  FaTimes, FaBox, FaWeight, FaMapMarkerAlt, 
-  FaMoneyBillWave, FaSave, FaBoxOpen, FaSnowflake, 
+  FaTimes, FaBox, FaSave, FaBoxOpen, FaSnowflake, 
   FaTruck, FaWarehouse, FaIndustry, FaCarSide, 
   FaShip, FaQuestionCircle
 } from 'react-icons/fa';

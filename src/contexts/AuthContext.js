@@ -10,20 +10,26 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Token kontrolü
+  // Sayfa yüklendiğinde veya yenilendiğinde token kontrolü
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const response = await api.get('/auth/me');
-          setUser(response.data);
-        } catch (error) {
-          localStorage.removeItem('token');
-          setUser(null);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setLoading(false);
+          return;
         }
+
+        // Token varsa kullanıcı bilgilerini al
+        const response = await api.get('/auth/me');
+        setUser(response.data);
+      } catch (error) {
+        console.error('Token doğrulama hatası:', error);
+        localStorage.removeItem('token'); // Geçersiz token'ı temizle
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     checkAuth();

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaTruck, FaBox } from 'react-icons/fa';
 import { Logo } from '../../components/common/Logo';
+import api from '../../utils/api';
 
 export const RoleSelection = () => {
   const [activeTab, setActiveTab] = useState('driver');
@@ -21,11 +22,64 @@ export const RoleSelection = () => {
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  // İlk kayıt verilerini kontrol et
+  useEffect(() => {
+    const registrationData = sessionStorage.getItem('registrationData');
+    if (!registrationData) {
+      // Eğer ilk kayıt verileri yoksa, kullanıcıyı ilk sayfaya yönlendir
+      navigate('/register');
+    }
+  }, [navigate]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // API'ye rol ve detay bilgilerini gönder
-    console.log('Rol ve detay bilgileri:', { role: activeTab, ...formData });
-    navigate('/dashboard');
+    
+    try {
+      const registrationData = JSON.parse(sessionStorage.getItem('registrationData'));
+      
+      if (!registrationData) {
+        throw new Error('Kayıt bilgileri eksik');
+      }
+
+      // API çağrıları
+      const initResponse = await api.post('/auth/register/initiate', registrationData);
+      
+      if (!initResponse.data.success) {
+        throw new Error('İlk aşama kayıt başarısız');
+      }
+
+      const userId = initResponse.data.data.userId;
+      
+      const roleData = {
+        role: activeTab,
+        ...(activeTab === 'driver' ? {
+          driverLicenseNo: formData.driverLicenseNo,
+          vehicleType: formData.vehicleType,
+          vehiclePlate: formData.vehiclePlate,
+          experience: formData.experience
+        } : {
+          companyName: formData.companyName,
+          taxNumber: formData.taxNumber,
+          companyAddress: formData.companyAddress,
+          sector: formData.sector
+        })
+      };
+
+      const completeResponse = await api.post(`/auth/register/complete/${userId}`, roleData);
+      
+      if (completeResponse.data.success) {
+        sessionStorage.removeItem('registrationData');
+        
+        if (completeResponse.data.data.token) {
+          localStorage.setItem('token', completeResponse.data.data.token);
+        }
+        
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Kayıt hatası:', error);
+      // Hata mesajını kullanıcıya göster
+    }
   };
 
   const inputClasses = `

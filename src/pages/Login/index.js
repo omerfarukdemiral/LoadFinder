@@ -16,12 +16,21 @@ export const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      console.log('Login isteği gönderiliyor:', formData);
-      await login(formData);
+      const loginData = {
+        email: formData.email.trim(),
+        password: formData.password
+      };
+      
+      console.log('Login isteği gönderiliyor:', loginData);
+      await login(loginData);
       console.log('Login başarılı');
       navigate('/dashboard');
     } catch (error) {
-      console.error('Login hatası:', error);
+      console.error('Login hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
     }
   };
 

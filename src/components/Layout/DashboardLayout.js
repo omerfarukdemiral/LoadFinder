@@ -1,16 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { 
   FaHome, FaUser, FaTruck, FaMoneyBill, FaMap, 
   FaBell, FaStar, FaHeadset, FaCog, FaSignOutAlt,
   FaBars, FaChevronDown, FaChevronRight, FaPlus,
-  FaList, FaInbox, FaKey, FaUserCircle, FaBuilding, 
-  FaClipboardList, FaHandshake, FaUsers, FaUserCog
+  FaList, FaInbox, FaKey, FaUserCircle, FaBuilding, FaUserCog,
+  FaClipboardList, FaHandshake, FaUsers
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../common/Logo';
 import profileImage from '../../assets/images/ofd.jpeg';
-import { MOCK_USERS_DETAILED } from '../../constants/mockData';
+import axios from 'axios';
 
 const getQuickMenuItems = (user) => {
   const baseMenuItems = [
@@ -83,8 +83,47 @@ export const DashboardLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSubmenu, setActiveSubmenu] = useState(null);
   const location = useLocation();
-  const { user, logout, updateUser} = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get('/api/users', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.data.success) {
+        setUsers(response.data.data);
+      }
+    } catch (error) {
+      console.error('Kullanıcılar yüklenirken hata:', error);
+    }
+  };
+
+  const handleUserChange = async (userId) => {
+    try {
+      const selectedUser = users.find(u => u._id === userId);
+      if (selectedUser) {
+        const response = await axios.put(`/api/users/${userId}/switch`, {}, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (response.data.success) {
+          updateUser(response.data.data);
+        }
+      }
+    } catch (error) {
+      console.error('Kullanıcı değiştirme hatası:', error);
+    }
+  };
 
   const menuItems = getQuickMenuItems(user);
 
@@ -244,21 +283,14 @@ export const DashboardLayout = () => {
             <div className="flex items-center gap-2 bg-yellow-500/10 px-3 py-1.5 rounded-md border border-yellow-500/20">
               <FaUserCog className="text-yellow-500" />
               <select
-                value={user?.id}
-                onChange={(e) => {
-                  const selectedUser = MOCK_USERS_DETAILED.find(
-                    u => u.id === Number(e.target.value)
-                  );
-                  if (selectedUser) {
-                    updateUser(selectedUser);
-                  }
-                }}
+                value={user?._id}
+                onChange={(e) => handleUserChange(e.target.value)}
                 className="bg-[#2a2a2a] border border-[#333333] text-[#e0e0e0] rounded-md p-1 text-sm min-w-[200px]"
               >
-                {MOCK_USERS_DETAILED.map(mockUser => (
-                  <option key={mockUser.id} value={mockUser.id}>
-                    {mockUser.name} ({mockUser.role === 'admin' ? 'Admin' : 
-                      mockUser.role === 'driver' ? 'Şoför' : 'Yük Veren'})
+                {users.map(user => (
+                  <option key={user._id} value={user._id}>
+                    {user.name} ({user.role === 'admin' ? 'Admin' : 
+                      user.role === 'driver' ? 'Şoför' : 'Yük Veren'})
                   </option>
                 ))}
               </select>
@@ -286,8 +318,12 @@ export const DashboardLayout = () => {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-white">{user?.name || 'Admin'}</span>
-                  <span className="text-xs text-gray-400">@{user?.username || 'admin'}</span>
+                  <span className="text-sm font-medium text-white">
+                    {user?.name || 'Kullanıcı'}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    @{user?.username || 'kullanici'}
+                  </span>
                 </div>
               </div>
               

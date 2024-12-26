@@ -14,11 +14,11 @@ export const Register = () => {
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // API'ye kayıt isteği gönder
-    console.log('İlk aşama kayıt bilgileri:', formData);
-    // Başarılı kayıt sonrası rol seçimine yönlendir
+    
+    // Form verilerini sessionStorage'a kaydet
+    sessionStorage.setItem('registrationData', JSON.stringify(formData));
     navigate('/register/role-selection');
   };
 

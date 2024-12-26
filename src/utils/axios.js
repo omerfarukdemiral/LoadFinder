@@ -1,14 +1,15 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',
+const instance = axios.create({
+  baseURL: process.env.REACT_APP_API_URL,
+  timeout: 5000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Request interceptor
-api.interceptors.request.use(
+// İstek interceptor'ı
+instance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -21,11 +22,13 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
-api.interceptors.response.use(
+// Yanıt interceptor'ı
+instance.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error('Axios Error:', error);
     if (error.response?.status === 401) {
+      // Token geçersiz veya süresi dolmuş
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
@@ -33,4 +36,4 @@ api.interceptors.response.use(
   }
 );
 
-export default api; 
+export default instance; 

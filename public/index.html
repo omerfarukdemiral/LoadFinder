@@ -28,6 +28,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Blinker:wght@100;200;300;400;600;700;800;900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Sora:wght@100..800&display=swap" rel="stylesheet">
     <title>React App</title>
+    <!-- Geliştirme ortamı için daha esnek CSP kuralları -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data: https:;
+      connect-src 'self' http://localhost:* https://localhost:*;
+      font-src 'self' data: https://fonts.gstatic.com;
+      frame-src 'self';
+    ">
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

@@ -99,6 +99,7 @@ export const AuthProvider = ({ children }) => {
       }
       return response.data;
     } catch (err) {
+      console.error('Profile update error:', err);
       if (err.response?.status !== 401) {
         setError(err.response?.data?.message || 'Profil güncelleme başarısız');
       }

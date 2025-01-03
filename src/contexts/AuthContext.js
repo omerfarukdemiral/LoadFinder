@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { BiLoaderAlt } from 'react-icons/bi';
 import api from '../utils/api';
 
 const AuthContext = createContext();
@@ -10,9 +11,9 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Sayfa yüklendiğinde veya yenilendiğinde token kontrolü
+  // Token ve kullanıcı durumu kontrolü
   useEffect(() => {
-    const checkAuth = async () => {
+    const initializeAuth = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -20,28 +21,58 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        // Token varsa kullanıcı bilgilerini al
+        // Token'ı header'a ekle
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        // Kullanıcı bilgilerini al
         const response = await api.get('/auth/me');
-        setUser(response.data);
+        
+        if (response.data.success && response.data.data) {
+          setUser(response.data.data);
+          setError(null);
+        } else {
+          // Token geçersizse sessiz bir şekilde temizle
+          handleLogout(true);
+        }
       } catch (error) {
-        console.error('Token doğrulama hatası:', error);
-        localStorage.removeItem('token'); // Geçersiz token'ı temizle
-        setUser(null);
+        console.error('Auth initialization error:', error);
+        // Sadece 401 hatası durumunda sessiz logout
+        if (error.response?.status === 401) {
+          handleLogout(true);
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
+    initializeAuth();
   }, []);
 
-  // Giriş
+  // Merkezi logout işlemi
+  const handleLogout = (silent = false) => {
+    localStorage.removeItem('token');
+    delete api.defaults.headers.common['Authorization'];
+    setUser(null);
+    setError(null);
+    
+    // Eğer sessiz logout değilse ve bir sonraki sayfa belirtilmemişse
+    if (!silent) {
+      window.location.href = '/login';
+    }
+  };
+
   const login = async (credentials) => {
     try {
       const response = await api.post('/auth/login', credentials);
-      localStorage.setItem('token', response.data.token);
-      setUser(response.data.user);
-      setError(null);
+      
+      if (response.data.success) {
+        const { token, user } = response.data;
+        localStorage.setItem('token', token);
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setUser(user);
+        setError(null);
+      }
+      
       return response.data;
     } catch (err) {
       setError(err.response?.data?.message || 'Giriş başarısız');
@@ -49,38 +80,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Profil güncelleme
-  const updateProfile = async (profileData) => {
+  const logout = async () => {
     try {
-      const response = await api.put('/users/profile', profileData);
-      setUser(response.data);
-      setError(null);
-      return response.data;
-    } catch (err) {
-      setError(err.response?.data?.message || 'Profil güncelleme başarısız');
-      throw err;
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      handleLogout();
     }
   };
 
-  // Çıkış
-  const logout = async () => {
+  const updateProfile = async (profileData) => {
     try {
-      // Backend'e çıkış isteği gönder
-      await api.post('/auth/logout');
-      
-      // Local storage'dan token'ı temizle
-      localStorage.removeItem('token');
-      
-      // User state'ini temizle
-      setUser(null);
-      
-      return true;
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Hata olsa bile local cleanup'ı yap
-      localStorage.removeItem('token');
-      setUser(null);
-      return false;
+      const response = await api.put('/users/profile', profileData);
+      if (response.data.success) {
+        setUser(response.data.data);
+        setError(null);
+      }
+      return response.data;
+    } catch (err) {
+      if (err.response?.status !== 401) {
+        setError(err.response?.data?.message || 'Profil güncelleme başarısız');
+      }
+      throw err;
     }
   };
 
@@ -89,13 +111,23 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     login,
-    updateProfile,
-    logout
+    logout,
+    updateProfile
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-primary-dark flex items-center justify-center">
+        <BiLoaderAlt className="w-12 h-12 text-white animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;

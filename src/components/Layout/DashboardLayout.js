@@ -200,15 +200,10 @@ export const DashboardLayout = () => {
 
   const handleLogout = async () => {
     try {
-      const success = await logout();
-      if (success) {
-        // Başarılı çıkış sonrası login sayfasına yönlendir
-        navigate('/', { replace: true });
-      } else {
-        console.error('Çıkış işlemi başarısız');
-      }
+      await logout();
+      navigate('/', { replace: true });
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Çıkış yapılırken hata:', error);
     }
   };
 
@@ -329,7 +324,7 @@ export const DashboardLayout = () => {
               
               <button 
                 onClick={handleLogout}
-                className="p-2 hover:bg-[#2a2a2a] rounded-full transition-colors"
+                className="p-2 hover:bg-primary-light rounded-full transition-colors"
                 title="Çıkış Yap"
               >
                 <FaSignOutAlt className="text-xl" />

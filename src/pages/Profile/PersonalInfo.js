@@ -1,20 +1,77 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaUser, FaSave, FaCamera } from 'react-icons/fa';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import AlertModal from '../../components/AlertModal';
 
 export const PersonalInfo = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user, updateProfile } = useAuth();
   const [profileData, setProfileData] = useState(user || {});
+  const [initialData, setInitialData] = useState(user || {});
+  const [isDirty, setIsDirty] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [nextPath, setNextPath] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      setProfileData(user);
+      setInitialData(user);
+    }
+  }, [user]);
+
+  // Form değişikliklerini kontrol et
+  useEffect(() => {
+    const hasChanges = JSON.stringify(profileData) !== JSON.stringify(initialData);
+    setIsDirty(hasChanges);
+  }, [profileData, initialData]);
+
+  // Sayfa değişikliği kontrolü
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
+  // Navigasyon kontrolü
+  const handleNavigation = (path) => {
+    if (isDirty) {
+      setNextPath(path);
+      setShowAlert(true);
+      return;
+    }
+    navigate(path);
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    setIsLoading(true);
+    
     try {
       await updateProfile(profileData);
       setSuccessMessage('Profil bilgileriniz başarıyla güncellendi!');
+      setInitialData(profileData);
+      setIsDirty(false);
+      
+      if (nextPath) {
+        navigate(nextPath);
+      }
+      
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Profile update error:', error);
+    } finally {
+      setIsLoading(false);
+      setShowAlert(false);
     }
   };
 
@@ -35,15 +92,34 @@ export const PersonalInfo = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#e0e0e0] font-blinker">Kişisel Bilgiler</h1>
+      <h1 className="text-2xl font-bold text-[#e0e0e0] font-blinker">
+        Kişisel Bilgiler
+      </h1>
 
+      {/* Başarı mesajı */}
       {successMessage && (
-        <div className="bg-green-500 text-white p-4 rounded-md">
+        <div className="bg-green-500/10 border border-green-500/20 text-green-500 p-4 rounded-md">
           {successMessage}
         </div>
       )}
 
-      <div className="bg-[#242424] rounded-lg p-6 border border-[#333333]">
+      {/* Alert Modal */}
+      {showAlert && (
+        <AlertModal
+          title="Değişiklikleri Kaydet"
+          message="Kaydedilmemiş değişiklikleriniz var. Kaydetmek istiyor musunuz?"
+          onConfirm={handleSubmit}
+          onCancel={() => {
+            setShowAlert(false);
+            if (nextPath) {
+              setIsDirty(false);
+              navigate(nextPath);
+            }
+          }}
+        />
+      )}
+
+      <div className="bg-surface rounded-lg p-6 border border-[#333333]">
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Profil Fotoğrafı Bölümü */}
           <div className="text-center space-y-4">
@@ -144,9 +220,17 @@ export const PersonalInfo = () => {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 flex items-center"
+              disabled={!isDirty || isLoading}
+              className={`
+                flex items-center px-6 py-2 rounded-md
+                ${isDirty 
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'}
+                transition-colors
+              `}
             >
-              <FaSave className="mr-2" /> Değişiklikleri Kaydet
+              <FaSave className="mr-2" />
+              {isLoading ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
             </button>
           </div>
         </form>

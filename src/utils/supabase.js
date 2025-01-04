@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://mwondkyurmrltkfhnfhu.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13b25ka3l1cm1ybHRrZmhuZmh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MTI0NDcsImV4cCI6MjA1MTQ4ODQ0N30.NpUIaFprqWO7h1rDibKWfxehZ54WCMFHQG5JykI8y_A';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://mwondkyurmrltkfhnfhu.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13b25ka3l1cm1ybHRrZmhuZmh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MTI0NDcsImV4cCI6MjA1MTQ4ODQ0N30.NpUIaFprqWO7h1rDibKWfxehZ54WCMFHQG5JykI8y_A';
 
-// Supabase istemcisini oluştur
+// Sabit değişkenler
+const BUCKET_NAME = 'LoadFinder';
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Storage işlemleri için yardımcı fonksiyonlar
@@ -23,12 +25,33 @@ const storage = {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
-        userId
+        userId,
+        bucket: BUCKET_NAME
       });
 
+      // Önce klasörün varlığını kontrol edelim
+      const folderPath = `${userId}/`;
+      const { data: folderFiles } = await supabase.storage
+        .from(BUCKET_NAME)
+        .list(folderPath);
+
+      // Eğer klasör yoksa (yani içinde hiç dosya yoksa), klasörü oluştur
+      if (!folderFiles || folderFiles.length === 0) {
+        const { error: folderError } = await supabase.storage
+          .from(BUCKET_NAME)
+          .upload(`${folderPath}.keep`, new Blob(['']));
+
+        if (folderError && !folderError.message.includes('already exists')) {
+          console.error('Klasör oluşturma hatası:', folderError);
+          throw folderError;
+        }
+      }
+
+      // Şimdi profil fotoğrafını yükleyelim
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/profile.${fileExt}`;
-      
+      console.log('Hedef dosya yolu:', fileName);
+
       // Upload işlemi için options
       const uploadOptions = {
         upsert: true,
@@ -41,10 +64,10 @@ const storage = {
         }
       };
 
-      console.log('Supabase upload çağrısı yapılıyor...');
+      console.log('Profil fotoğrafı yükleniyor:', fileName);
       
       const { data, error } = await supabase.storage
-        .from('avatars')
+        .from(BUCKET_NAME)
         .upload(fileName, file, uploadOptions);
 
       if (error) {
@@ -56,7 +79,7 @@ const storage = {
 
       // Public URL oluştur
       const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
+        .from(BUCKET_NAME)
         .getPublicUrl(fileName);
 
       console.log('İşlem tamamlandı:', publicUrl);
@@ -73,7 +96,7 @@ const storage = {
   },
 
   // Dosya silme
-  deleteFile: async (path, bucket = 'avatars') => {
+  deleteFile: async (path, bucket = BUCKET_NAME) => {
     try {
       const { error } = await supabase.storage
         .from(bucket)

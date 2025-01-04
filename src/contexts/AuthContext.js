@@ -54,14 +54,11 @@ export const AuthProvider = ({ children }) => {
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
     setError(null);
-    
-    // Eğer sessiz logout değilse ve bir sonraki sayfa belirtilmemişse
-    if (!silent) {
-      window.location.href = '/login';
-    }
   };
 
   const login = async (credentials) => {
+    setError(null); // Her login denemesinde hata mesajını temizle
+    
     try {
       const response = await api.post('/auth/login', credentials);
       
@@ -70,13 +67,16 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', token);
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setUser(user);
-        setError(null);
+        return { success: true, data: response.data };
+      } else {
+        const errorMsg = response.data.message || 'Giriş başarısız';
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
       }
-      
-      return response.data;
     } catch (err) {
-      setError(err.response?.data?.message || 'Giriş başarısız');
-      throw err;
+      const errorMsg = err.response?.data?.message || 'Giriş başarısız';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
     }
   };
 

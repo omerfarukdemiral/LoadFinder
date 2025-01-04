@@ -4,33 +4,34 @@ import { Logo } from '../../components/common/Logo';
 import { FcGoogle } from 'react-icons/fc';
 import { useAuth } from '../../contexts/AuthContext';
 
-
 export const Login = () => {
   const navigate = useNavigate();
-  const { login, error } = useAuth();
+  const { login, error: authError } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     try {
       const loginData = {
         email: formData.email.trim(),
         password: formData.password
       };
       
-      console.log('Login isteği gönderiliyor:', loginData);
-      await login(loginData);
-      console.log('Login başarılı');
-      navigate('/dashboard');
+      const result = await login(loginData);
+      
+      if (result.success) {
+        navigate('/dashboard');
+      }
     } catch (error) {
-      console.error('Login hatası:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
+      console.error('Login hatası:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,9 +64,9 @@ export const Login = () => {
           <form onSubmit={handleSubmit} className="bg-[#242424] rounded-lg p-8 border border-[#333333] space-y-6">
             <h1 className="text-2xl font-bold text-white text-center mb-6">Giriş Yap</h1>
             
-            {error && (
+            {authError && (
               <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-md text-sm text-center">
-                {error}
+                {authError}
               </div>
             )}
             
@@ -78,6 +79,7 @@ export const Login = () => {
                 onChange={handleChange}
                 className="w-full bg-[#2a2a2a] border border-[#333333] text-[#e0e0e0] rounded-md p-2"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -90,14 +92,16 @@ export const Login = () => {
                 onChange={handleChange}
                 className="w-full bg-[#2a2a2a] border border-[#333333] text-[#e0e0e0] rounded-md p-2"
                 required
+                disabled={isLoading}
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition-colors"
+              className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
             >
-              Giriş Yap
+              {isLoading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
             </button>
           </form>
 
@@ -105,6 +109,7 @@ export const Login = () => {
             <button
               type="button"
               className="w-full bg-[#242424] text-white py-2 px-4 rounded-md hover:bg-[#2a2a2a] flex items-center justify-center space-x-2 transition-colors border border-[#333333]"
+              disabled={isLoading}
             >
               <FcGoogle className="text-xl" />
               <span>Google ile Giriş Yap</span>

@@ -10,7 +10,8 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../common/Logo';
 import profileImage from '../../assets/images/ofd.jpeg';
-import axios from 'axios';
+import api from '../../utils/api';
+import { toast } from 'react-hot-toast';
 
 const getQuickMenuItems = (user) => {
   const baseMenuItems = [
@@ -93,11 +94,7 @@ export const DashboardLayout = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('/api/users', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get('/users');
       if (response.data.success) {
         setUsers(response.data.data);
       }
@@ -110,18 +107,20 @@ export const DashboardLayout = () => {
     try {
       const selectedUser = users.find(u => u._id === userId);
       if (selectedUser) {
-        const response = await axios.put(`/api/users/${userId}/switch`, {}, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+        const response = await api.put(`/users/${userId}/switch`);
         
         if (response.data.success) {
           updateUser(response.data.data);
+          
+          toast.success(`${selectedUser.name} olarak giriş yapıldı`);
         }
       }
     } catch (error) {
       console.error('Kullanıcı değiştirme hatası:', error);
+      if (error.response) {
+        console.error('Hata detayı:', error.response.data);
+      }
+      toast.error(error.response?.data?.message || 'Kullanıcı değiştirme başarısız');
     }
   };
 
@@ -282,10 +281,10 @@ export const DashboardLayout = () => {
                 onChange={(e) => handleUserChange(e.target.value)}
                 className="bg-[#2a2a2a] border border-[#333333] text-[#e0e0e0] rounded-md p-1 text-sm min-w-[200px]"
               >
-                {users.map(user => (
-                  <option key={user._id} value={user._id}>
-                    {user.name} ({user.role === 'admin' ? 'Admin' : 
-                      user.role === 'driver' ? 'Şoför' : 'Yük Veren'})
+                {users.map(u => (
+                  <option key={u._id} value={u._id}>
+                    {u.name} ({u.role === 'admin' ? 'Admin' : 
+                      u.role === 'driver' ? 'Şoför' : 'Yük Veren'})
                   </option>
                 ))}
               </select>

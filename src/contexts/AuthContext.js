@@ -57,24 +57,30 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (credentials) => {
-    setError(null); // Her login denemesinde hata mesajını temizle
+    setError(null);
     
     try {
       const response = await api.post('/auth/login', credentials);
       
-      if (response.data.success) {
-        const { token, user } = response.data;
+      if (response.data.success && response.data.data) {
+        const { token, user } = response.data.data;
+        
+        if (!token || !user) {
+          throw new Error('Geçersiz sunucu yanıtı');
+        }
+
+        // Token'ı kaydet ve header'a ekle
         localStorage.setItem('token', token);
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        // Kullanıcı bilgilerini güncelle
         setUser(user);
-        return { success: true, data: response.data };
+        return { success: true, data: response.data.data };
       } else {
-        const errorMsg = response.data.message || 'Giriş başarısız';
-        setError(errorMsg);
-        return { success: false, error: errorMsg };
+        throw new Error(response.data.message || 'Giriş başarısız');
       }
     } catch (err) {
-      const errorMsg = err.response?.data?.message || 'Giriş başarısız';
+      const errorMsg = err.response?.data?.message || err.message || 'Giriş başarısız';
       setError(errorMsg);
       return { success: false, error: errorMsg };
     }
@@ -107,13 +113,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = (userData) => {
+    try {
+      if (!userData) {
+        console.error('updateUser: userData boş');
+        return;
+      }
+
+      if (userData.token) {
+        localStorage.setItem('token', userData.token);
+        api.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
+      }
+
+      if (userData.user) {
+        setUser(userData.user);
+        console.log('Kullanıcı bilgileri güncellendi:', userData.user.name);
+      } else {
+        console.warn('updateUser: user verisi eksik');
+      }
+    } catch (error) {
+      console.error('updateUser hatası:', error);
+    }
+  };
+
   const value = {
     user,
     loading,
     error,
     login,
     logout,
-    updateProfile
+    updateProfile,
+    updateUser
   };
 
   if (loading) {

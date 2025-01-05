@@ -57,71 +57,89 @@ export const PersonalInfo = () => {
   };
 
   // Dosya seçim işlemi
-  const handleFileSelect = (e) => {
+  const handleFileSelect = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     try {
-      // Dosya boyutu kontrolü (5MB)
+      // Dosya kontrolleri
       if (file.size > 5 * 1024 * 1024) {
         throw new Error('Dosya boyutu 5MB\'dan küçük olmalıdır');
       }
 
-      // Dosya tipi kontrolü
       const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
         throw new Error('Sadece JPEG, PNG ve WEBP formatları desteklenmektedir');
       }
 
-      // Dosyayı state'e kaydet
       setSelectedFile(file);
-      
-      // Base64 önizleme oluştur
+      setIsLoading(true);
+      setUploadError(null);
+
+      // Dosyayı önizleme için oku
       const reader = new FileReader();
-      reader.onloadend = () => {
+      
+      reader.onloadstart = () => {
+        setUploadProgress(0);
+      };
+
+      reader.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100;
+          setUploadProgress(progress);
+        }
+      };
+
+      reader.onload = () => {
+        // Önizleme için base64 formatında resmi state'e kaydet
         setProfileData(prev => ({
           ...prev,
-          avatar: reader.result // Base64 formatında
+          avatar: reader.result
         }));
+        setIsDirty(true);
+        setIsLoading(false);
+        setUploadProgress(0);
       };
+
+      reader.onerror = () => {
+        setUploadError('Dosya okuma hatası');
+        setIsLoading(false);
+      };
+
       reader.readAsDataURL(file);
-      setIsDirty(true);
 
     } catch (error) {
       console.error('Dosya seçim hatası:', error);
       setUploadError(error.message);
       setSelectedFile(null);
+      setIsLoading(false);
     }
   };
 
   // Form gönderimi sırasında fotoğraf yükleme
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-    setIsLoading(true);
     
     try {
-      // Eğer yeni bir fotoğraf seçildiyse önce onu yükle
+      setIsLoading(true);
       let avatarUrl = profileData.avatar;
-      
-      if (selectedFile) {
-        console.log('Fotoğraf yükleme başlıyor...', {
-          fileSize: selectedFile.size,
-          fileType: selectedFile.type,
-          userId: profileData._id
-        });
 
+      // Eğer yeni bir dosya seçildiyse Supabase'e yükle
+      if (selectedFile) {
+        setUploadProgress(0);
+        
         avatarUrl = await storage.uploadProfilePhoto(
           selectedFile,
           profileData._id,
           {
             onProgress: (progress) => {
-              console.log('Upload progress:', progress);
               setUploadProgress(progress);
             }
           }
         );
 
-        console.log('Fotoğraf yükleme başarılı:', avatarUrl);
+        // Cache'i önlemek için timestamp ekle
+        avatarUrl = `${avatarUrl}?t=${Date.now()}`;
       }
 
       // Profil bilgilerini güncelle
@@ -132,8 +150,9 @@ export const PersonalInfo = () => {
 
       await updateProfile(updatedProfile);
       
-      setSuccessMessage('Profil bilgileriniz başarıyla güncellendi!');
+      setProfileData(updatedProfile);
       setInitialData(updatedProfile);
+      setSuccessMessage('Profil bilgileriniz başarıyla güncellendi!');
       setIsDirty(false);
       setSelectedFile(null);
       
@@ -246,17 +265,43 @@ export const PersonalInfo = () => {
             <h2 className="text-xl font-semibold text-[#e0e0e0]">Profil Fotoğrafı</h2>
             <div className="flex justify-center">
               <div className="relative">
-                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-[#333333] bg-[#2a2a2a]">
+                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-[#333333] bg-[#2a2a2a] relative">
                   {isLoading ? (
                     <div className="w-full h-full flex items-center justify-center bg-gray-800/50">
-                      <div className="text-blue-400 text-sm">
-                        {uploadProgress}%
+                      {/* Dairesel Progress Bar */}
+                      <svg className="absolute inset-0 w-full h-full -rotate-90">
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="30"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                          className="text-gray-700"
+                        />
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="30"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                          className="text-blue-500"
+                          strokeDasharray={`${2 * Math.PI * 30}`}
+                          strokeDashoffset={`${2 * Math.PI * 30 * (1 - uploadProgress / 100)}`}
+                          style={{
+                            transition: 'stroke-dashoffset 0.3s ease'
+                          }}
+                        />
+                      </svg>
+                      <div className="z-10 text-blue-400 text-sm font-medium">
+                        {Math.round(uploadProgress)}%
                       </div>
                     </div>
                   ) : (
                     profileData.avatar ? (
                       <img 
-                        src={profileData.avatar} 
+                        src={`${profileData.avatar}${profileData.avatar.includes('?') ? '&' : '?'}cache=${Date.now()}`}
                         alt="Profil" 
                         className="w-full h-full object-cover"
                       />
@@ -267,16 +312,6 @@ export const PersonalInfo = () => {
                     )
                   )}
                 </div>
-
-                {/* Progress Bar */}
-                {uploadProgress > 0 && uploadProgress < 100 && (
-                  <div className="absolute -bottom-6 left-0 right-0 h-1 bg-gray-700 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-500 transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                )}
 
                 <label 
                   htmlFor="avatar-upload" 
